@@ -172,7 +172,6 @@ impl AaveLooper {
             ))
             .await?;
         }
-        // let (_, _, available_borrows, _, _, _) = self
         let result = self
             .aave
             .getUserAccountData(self.signer_address)
