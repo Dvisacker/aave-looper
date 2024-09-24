@@ -17,15 +17,70 @@ use IERC20::IERC20Instance;
 pub mod config;
 pub mod provider;
 
-sol! {
-    #[derive(Debug, PartialEq, Eq)]
+// sol! {
+
+//     #[derive(Debug, PartialEq, Eq)]
+//     #[sol(rpc)]
+//     struct ReserveConfigurationMap {
+//         uint256 data;
+//     }
+
+//     #[derive(Debug, PartialEq, Eq)]
+//     #[sol(rpc)]
+//     struct ReserveData {
+//         //stores the reserve configuration
+//         ReserveConfigurationMap configuration;
+//         //the liquidity index. Expressed in ray
+//         uint128 liquidityIndex;
+//         //the current supply rate. Expressed in ray
+//         uint128 currentLiquidityRate;
+//         //variable borrow index. Expressed in ray
+//         uint128 variableBorrowIndex;
+//         //the current variable borrow rate. Expressed in ray
+//         uint128 currentVariableBorrowRate;
+//         //the current stable borrow rate. Expressed in ray
+//         uint128 currentStableBorrowRate;
+//         //timestamp of last update
+//         uint40 lastUpdateTimestamp;
+//         //the id of the reserve. Represents the position in the list of the active reserves
+//         uint16 id;
+//         //timestamp until when liquidations are not allowed on the reserve, if set to past liquidations will be allowed
+//         uint40 liquidationGracePeriodUntil;
+//         //aToken address
+//         address aTokenAddress;
+//         //stableDebtToken address
+//         address stableDebtTokenAddress;
+//         //variableDebtToken address
+//         address variableDebtTokenAddress;
+//         //address of the interest rate strategy
+//         address interestRateStrategyAddress;
+//         //the current treasury balance, scaled
+//         uint128 accruedToTreasury;
+//         //the outstanding unbacked aTokens minted through the bridging feature
+//         uint128 unbacked;
+//         //the outstanding debt borrowed against this asset in isolation mode
+//         uint128 isolationModeTotalDebt;
+//         //the amount of underlying accounted for by the protocol
+//         uint128 virtualUnderlyingBalance;
+//       }
+
+//     #[derive(Debug, PartialEq, Eq)]
+//     #[sol(rpc)]
+//     contract IAAVE {
+//         function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+//         function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
+//         function getUserAccountData(address user) external view returns (uint256 totalCollateralBase, uint256 totalDebtBase, uint256 availableBorrowsBase, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor);
+//         function getReserveData(address asset) external view returns (ReserveData);
+
+//     }
+// }
+
+sol!(
     #[sol(rpc)]
-    contract IAAVE {
-        function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
-        function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
-        function getUserAccountData(address user) external view returns (uint256 totalCollateralBase, uint256 totalDebtBase, uint256 availableBorrowsBase, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor);
-    }
-}
+    #[derive(Debug, PartialEq, Eq)]
+    IAAVE,
+    "aave-pool-abi.json"
+);
 
 sol! {
     #[derive(Debug, PartialEq, Eq)]
@@ -45,8 +100,8 @@ struct AaveLooper {
     amount: U256,
     leverage: u8,
     threshold: U256,
-    telegram_bot: Bot,
-    chat_id: i64,
+    // telegram_bot: Bot,
+    // chat_id: i64,
 }
 
 impl AaveLooper {
@@ -62,8 +117,8 @@ impl AaveLooper {
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let aave = IAAVE::new(aave_address, provider.clone());
         let asset = IERC20::new(asset_address, provider.clone());
-        let telegram_bot = Bot::new(telegram_token);
         let signer_address = provider.default_signer_address();
+        // let telegram_bot = Bot::new(telegram_token);
 
         Ok(Arc::new(Self {
             provider,
@@ -74,8 +129,8 @@ impl AaveLooper {
             amount,
             leverage,
             threshold,
-            telegram_bot,
-            chat_id,
+            // telegram_bot,
+            // chat_id,
         }))
     }
 
@@ -87,6 +142,36 @@ impl AaveLooper {
     }
 
     async fn monitor_and_act(&self) -> Result<(), Box<dyn Error>> {
+        let reserve_data = self.aave.getReserveData(self.asset_address).call().await?;
+        println!("Reserve data: {:?}", reserve_data);
+        let a_token_address = reserve_data._0.aTokenAddress;
+
+        let a_token = IERC20::IERC20Instance::new(a_token_address, self.provider.clone());
+        let IERC20::balanceOfReturn {
+            _0: total_liquidity,
+        } = a_token.balanceOf(a_token_address).call().await?;
+        let IERC20::balanceOfReturn { _0: asset_balance } =
+            self.asset.balanceOf(a_token_address).call().await?;
+
+        let available_liquidity_wei = total_liquidity - asset_balance;
+        let available_liquidity = available_liquidity_wei / U256::from(10).pow(U256::from(18));
+
+        println!("Available liquidity in pool: {}", available_liquidity);
+
+        if available_liquidity > self.threshold {
+            self.enter_position().await?;
+            self.send_telegram_message(format!(
+                "Entered position. Available liquidity: {}",
+                available_liquidity
+            ))
+            .await?;
+        } else {
+            self.send_telegram_message(format!(
+                "Available liquidity ({}) below threshold. No action taken.",
+                available_liquidity
+            ))
+            .await?;
+        }
         // let (_, _, available_borrows, _, _, _) = self
         let result = self
             .aave
@@ -123,39 +208,40 @@ impl AaveLooper {
         println!("Approved AAVE to spend tokens: {:?}", receipt);
 
         // Supply assets to AAVE
-        let tx = self
-            .aave
-            .supply(self.asset_address, self.amount, self.signer_address, 0);
-        let receipt = tx.send().await?.get_receipt().await?;
-        println!("Supplied assets to AAVE: {:?}", receipt);
+        // let tx = self
+        //     .aave
+        //     .supply(self.asset_address, self.amount, self.signer_address, 0);
+        // let receipt = tx.send().await?.get_receipt().await?;
+        // println!("Supplied assets to AAVE: {:?}", receipt);
 
-        // Calculate borrow amount based on leverage
-        let borrow_amount = self.amount * U256::from(self.leverage - 1) / U256::from(self.leverage);
+        // // Calculate borrow amount based on leverage
+        // let borrow_amount = self.amount * U256::from(self.leverage - 1) / U256::from(self.leverage);
 
-        // Borrow assets from AAVE
-        let tx = self.aave.borrow(
-            self.asset_address,
-            U256::from(borrow_amount),
-            U256::from(2),
-            0,
-            self.signer_address,
-        );
-        let receipt = tx.send().await?.get_receipt().await?;
-        println!("Borrowed assets from AAVE: {:?}", receipt);
+        // // Borrow assets from AAVE
+        // let tx = self.aave.borrow(
+        //     self.asset_address,
+        //     U256::from(borrow_amount),
+        //     U256::from(2),
+        //     0,
+        //     self.signer_address,
+        // );
+        // let receipt = tx.send().await?.get_receipt().await?;
+        // println!("Borrowed assets from AAVE: {:?}", receipt);
 
         Ok(())
     }
 
     async fn send_telegram_message(&self, message: String) -> Result<(), Box<dyn Error>> {
-        self.telegram_bot
-            .send_message(ChatId(self.chat_id), message)
-            .await?;
+        // self.telegram_bot
+        //     .send_message(ChatId(self.chat_id), message)
+        //     .await?;
         Ok(())
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv::dotenv().ok();
     let signer: PrivateKeySigner = std::env::var("PRIVATE_KEY")
         .expect("PRIVATE_KEY must be set")
         .parse()
@@ -168,13 +254,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .expect("CHAT_ID should be a valid integer");
 
     let wallet = EthereumWallet::new(signer);
-    let provider = get_provider(Chain::from_named(NamedChain::Mainnet), wallet).await;
+    let provider = get_provider(Chain::from_named(NamedChain::Arbitrum), wallet).await;
 
-    let aave_address = Address::from_str("0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9")?; // AAVE v3 lending pool address
-    let asset_address = Address::from_str("0x6B175474E89094C44Da98b954EedeAC495271d0F")?; // DAI address
-    let amount = U256::from(1000) * U256::from(10).pow(U256::from(18)); // 1000 DAI
+    let aave_address = Address::from_str("0x794a61358D6845594F94dc1DB02A252b5b4814aD")?; // AAVE v3 lending pool address
+    let asset_address = Address::from_str("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1")?; // USDC address
+    let amount = U256::from(1000) * U256::from(10).pow(U256::from(6)); // 1000 USDC
     let leverage = 2; // 2x leverage
-    let threshold = U256::from(100) * U256::from(10).pow(U256::from(18)); // 100 DAI threshold
+    let threshold = U256::from(100) * U256::from(10).pow(U256::from(6)); // 100 USDC threshold
 
     let bot = AaveLooper::new(
         provider,
