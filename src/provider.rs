@@ -13,13 +13,6 @@ use alloy_chains::{Chain, NamedChain};
 use std::env;
 use std::sync::Arc;
 
-// pub type SignerProvider = FillProvider<
-//     JoinFill<Identity, WalletFiller<EthereumWallet>>,
-//     RootProvider<BoxTransport>,
-//     BoxTransport,
-//     Ethereum,
-// >;
-
 pub type SignerProvider = FillProvider<
     JoinFill<
         JoinFill<
