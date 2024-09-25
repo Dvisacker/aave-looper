@@ -1,15 +1,10 @@
-use aave::AaveLooper;
-use alloy::{
-    network::EthereumWallet, providers::WalletProvider, signers::local::PrivateKeySigner, sol,
-    transports::BoxTransport,
-};
+use alloy::{network::EthereumWallet, signers::local::PrivateKeySigner};
 use alloy_chains::{Chain, NamedChain};
-use alloy_primitives::{Address, U256};
-use provider::{get_provider, SignerProvider};
+use provider::get_provider;
 use std::error::Error;
-use std::str::FromStr;
 
 pub mod aave;
+pub mod addressbook;
 pub mod cli;
 pub mod config;
 pub mod provider;
