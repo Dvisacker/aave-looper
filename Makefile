@@ -32,7 +32,7 @@ sol-test:
 
 sol-bind:
 	@echo "Generating Rust bindings for Solidity contracts..."
-	@cd $(CONTRACTS_DIR) && $(FORGE) bind --alloy --bindings-path ../$(BINDINGS_DIR) --crate-name bindings
+	@cd $(CONTRACTS_DIR) && forge bind --alloy --bindings-path ../src/bindings --crate-name bindings --alloy-version 0.3.3 --module
 
 # Combined commands
 build: rust-build sol-build

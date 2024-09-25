@@ -1,8 +1,0 @@
-[package]
-name = "bindings"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-alloy = { version = "0.3.3", features = ["full"] }
-# alloy = { git = "https://github.com/alloy-rs/alloy", rev = "0.3.3", features = ["sol-types", "contract"] }
