@@ -11,75 +11,17 @@ use std::sync::Arc;
 use std::time::Duration;
 use teloxide::prelude::*;
 use tokio::time;
-use IAAVE::IAAVEInstance;
+use ILendingPool::ILendingPoolInstance;
 use IERC20::IERC20Instance;
 
 pub mod config;
 pub mod provider;
 
-// sol! {
-
-//     #[derive(Debug, PartialEq, Eq)]
-//     #[sol(rpc)]
-//     struct ReserveConfigurationMap {
-//         uint256 data;
-//     }
-
-//     #[derive(Debug, PartialEq, Eq)]
-//     #[sol(rpc)]
-//     struct ReserveData {
-//         //stores the reserve configuration
-//         ReserveConfigurationMap configuration;
-//         //the liquidity index. Expressed in ray
-//         uint128 liquidityIndex;
-//         //the current supply rate. Expressed in ray
-//         uint128 currentLiquidityRate;
-//         //variable borrow index. Expressed in ray
-//         uint128 variableBorrowIndex;
-//         //the current variable borrow rate. Expressed in ray
-//         uint128 currentVariableBorrowRate;
-//         //the current stable borrow rate. Expressed in ray
-//         uint128 currentStableBorrowRate;
-//         //timestamp of last update
-//         uint40 lastUpdateTimestamp;
-//         //the id of the reserve. Represents the position in the list of the active reserves
-//         uint16 id;
-//         //timestamp until when liquidations are not allowed on the reserve, if set to past liquidations will be allowed
-//         uint40 liquidationGracePeriodUntil;
-//         //aToken address
-//         address aTokenAddress;
-//         //stableDebtToken address
-//         address stableDebtTokenAddress;
-//         //variableDebtToken address
-//         address variableDebtTokenAddress;
-//         //address of the interest rate strategy
-//         address interestRateStrategyAddress;
-//         //the current treasury balance, scaled
-//         uint128 accruedToTreasury;
-//         //the outstanding unbacked aTokens minted through the bridging feature
-//         uint128 unbacked;
-//         //the outstanding debt borrowed against this asset in isolation mode
-//         uint128 isolationModeTotalDebt;
-//         //the amount of underlying accounted for by the protocol
-//         uint128 virtualUnderlyingBalance;
-//       }
-
-//     #[derive(Debug, PartialEq, Eq)]
-//     #[sol(rpc)]
-//     contract IAAVE {
-//         function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
-//         function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
-//         function getUserAccountData(address user) external view returns (uint256 totalCollateralBase, uint256 totalDebtBase, uint256 availableBorrowsBase, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor);
-//         function getReserveData(address asset) external view returns (ReserveData);
-
-//     }
-// }
-
 sol!(
     #[sol(rpc)]
     #[derive(Debug, PartialEq, Eq)]
-    IAAVE,
-    "aave-pool-abi.json"
+    ILendingPool,
+    "./ILendingPool.json"
 );
 
 sol! {
@@ -95,7 +37,7 @@ struct AaveLooper {
     provider: Arc<SignerProvider>,
     signer_address: Address,
     asset_address: Address,
-    aave: IAAVEInstance<BoxTransport, Arc<SignerProvider>>,
+    aave: ILendingPoolInstance<BoxTransport, Arc<SignerProvider>>,
     asset: IERC20Instance<BoxTransport, Arc<SignerProvider>>,
     amount: U256,
     leverage: u8,
@@ -115,7 +57,7 @@ impl AaveLooper {
         telegram_token: String,
         chat_id: i64,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
-        let aave = IAAVE::new(aave_address, provider.clone());
+        let aave = ILendingPool::new(aave_address, provider.clone());
         let asset = IERC20::new(asset_address, provider.clone());
         let signer_address = provider.default_signer_address();
         // let telegram_bot = Bot::new(telegram_token);

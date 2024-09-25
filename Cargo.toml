@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bindings = { path = "./src/bindings" }
 tokio = { version = "1.40.0", features = ["full"] }
 alloy = { version = "0.3.3", features = ["full"] }
 alloy-primitives = "0.8"
 alloy-rpc-types = "0.3.3"
+alloy-contract = "0.3.3"
 alloy-sol-types = "0.8.3"
 alloy-consensus = "0.3.3"
 teloxide = { version = "0.13.0", features = ["full"] }
