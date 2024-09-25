@@ -15,7 +15,10 @@ dependencies = [
  "alloy-sol-types",
  "clap",
  "dotenv",
+ "lazy_static",
  "once_cell",
+ "serde",
+ "serde_json",
  "teloxide",
  "tokio",
 ]

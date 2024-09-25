@@ -165,11 +165,11 @@ impl AaveLooper {
         println!("Approved AAVE to spend tokens: {:?}", receipt);
 
         // Supply assets to AAVE
-        // let tx = self
-        //     .aave
-        //     .supply(self.asset_address, self.amount, self.signer_address, 0);
-        // let receipt = tx.send().await?.get_receipt().await?;
-        // println!("Supplied assets to AAVE: {:?}", receipt);
+        let tx = self
+            .lending_pool
+            .supply(self.asset_address, self.amount, self.signer_address, 0);
+        let receipt = tx.send().await?.get_receipt().await?;
+        println!("Supplied assets to AAVE: {:?}", receipt);
 
         // // Calculate borrow amount based on leverage
         // let borrow_amount = self.amount * U256::from(self.leverage - 1) / U256::from(self.leverage);

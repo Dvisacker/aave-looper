@@ -1,9 +1,11 @@
 use crate::aave::AaveLooper;
+use crate::addressbook::{get_aave_lending_pool_address, get_token_address};
 use crate::provider::SignerProvider;
+use alloy::providers::Provider;
+use alloy_chains::Chain;
 use alloy_primitives::{Address, U256};
 use clap::{Parser, Subcommand};
 use std::error::Error;
-use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Parser)]
@@ -15,27 +17,19 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Enter a position on Aave
     EnterPosition {
-        /// Amount to supply (in USDC)
         #[arg(short, long)]
         amount: u64,
-
-        /// Leverage factor
         #[arg(short, long, default_value_t = 2)]
         leverage: u8,
+        #[arg(short, long, default_value = "USDC")]
+        token: String,
     },
-    /// Start running the Aave bot
     RunBot {
-        /// Amount to supply (in USDC)
         #[arg(short, long)]
         amount: u64,
-
-        /// Leverage factor
         #[arg(short, long, default_value_t = 2)]
         leverage: u8,
-
-        /// Threshold for available liquidity (in USDC)
         #[arg(short, long, default_value_t = 100)]
         threshold: u64,
     },
@@ -43,11 +37,21 @@ enum Commands {
 
 pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
+    let id = provider.get_chain_id().await?;
+    let chain = Chain::from_id(id);
 
     match &cli.command {
-        Commands::EnterPosition { amount, leverage } => {
-            let aave_address = Address::from_str("0x794a61358D6845594F94dc1DB02A252b5b4814aD")?;
-            let asset_address = Address::from_str("0xaf88d065e77c8cC2239327C5EDb3A432268e5831")?;
+        Commands::EnterPosition {
+            amount,
+            leverage,
+            token,
+        } => {
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let asset_address = get_token_address(chain, &token).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", token))
+            })?;
             let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Convert to USDC wei
             let threshold = U256::from(0); // Set threshold to 0 for immediate execution
 
@@ -72,8 +76,11 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             leverage,
             threshold,
         } => {
-            let aave_address = Address::from_str("0x794a61358D6845594F94dc1DB02A252b5b4814aD")?;
-            let asset_address = Address::from_str("0xaf88d065e77c8cC2239327C5EDb3A432268e5831")?;
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let asset_address = get_token_address(chain, "usdc")
+                .ok_or_else(|| Box::<dyn Error>::from("USDC address not found for this chain"))?;
             let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Convert to USDC wei
             let threshold_wei = U256::from(*threshold) * U256::from(10).pow(U256::from(6)); // Convert to USDC wei
 
