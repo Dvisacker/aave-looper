@@ -5,9 +5,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.40.0", features = ["full"] }
-alloy = { version = "0.3.3", features = [
-    "full"
-] }
+alloy = { version = "0.3.3", features = ["full"] }
 alloy-primitives = "0.8"
 alloy-rpc-types = "0.3.3"
 alloy-sol-types = "0.8.3"
@@ -20,3 +18,4 @@ dotenv = "0.15.0"
 [profile.dev]
 panic = "abort"
 incremental = true
+
