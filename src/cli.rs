@@ -20,7 +20,7 @@ enum Commands {
     EnterPosition {
         #[arg(short, long)]
         amount: u64,
-        #[arg(short, long, default_value_t = 2)]
+        #[arg(short, long, default_value_t = 1)]
         leverage: u8,
         #[arg(short, long, default_value = "USDC")]
         token: String,

@@ -25,7 +25,7 @@ lazy_static! {
 
 fn load_contract_addresses() -> ContractAddresses {
     let mut file =
-        File::open("src/addressbook.json").expect("Unable to open contract addresses file");
+        File::open("./src/addressbook.json").expect("Unable to open contract addresses file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Unable to read contract addresses file");

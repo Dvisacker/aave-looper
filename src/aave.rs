@@ -20,6 +20,7 @@ sol! {
     #[derive(Debug, PartialEq, Eq)]
     #[sol(rpc)]
     contract IERC20 {
+        function decimals() external view returns (uint8);
         function approve(address spender, uint256 amount) external returns (bool);
         function balanceOf(address account) external view returns (uint256);
     }
@@ -31,7 +32,7 @@ pub struct AaveLooper {
     asset_address: Address,
     lending_pool: ILendingPoolInstance<BoxTransport, Arc<SignerProvider>>,
     asset: IERC20Instance<BoxTransport, Arc<SignerProvider>>,
-    amount: U256,
+    max_amount: U256,
     leverage: u8,
     threshold: U256,
     // telegram_bot: Bot,
@@ -43,7 +44,7 @@ impl AaveLooper {
         provider: Arc<SignerProvider>,
         aave_address: Address,
         asset_address: Address,
-        amount: U256,
+        max_amount: U256,
         leverage: u8,
         threshold: U256,
         telegram_token: String,
@@ -60,7 +61,7 @@ impl AaveLooper {
             lending_pool,
             asset,
             asset_address,
-            amount,
+            max_amount,
             leverage,
             threshold,
             // telegram_bot,
@@ -160,14 +161,14 @@ impl AaveLooper {
         // Approve AAVE to spend our tokens
         let tx = self
             .asset
-            .approve(*self.lending_pool.address(), self.amount);
+            .approve(*self.lending_pool.address(), self.max_amount);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Approved AAVE to spend tokens: {:?}", receipt);
 
         // Supply assets to AAVE
-        let tx = self
-            .lending_pool
-            .supply(self.asset_address, self.amount, self.signer_address, 0);
+        let tx =
+            self.lending_pool
+                .supply_0(self.asset_address, self.max_amount, self.signer_address, 0);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Supplied assets to AAVE: {:?}", receipt);
 
