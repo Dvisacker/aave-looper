@@ -3,8 +3,8 @@ use alloy_chains::{Chain, NamedChain};
 use provider::get_provider;
 use std::error::Error;
 
-pub mod aave;
 pub mod addressbook;
+pub mod bot;
 pub mod cli;
 pub mod config;
 pub mod provider;

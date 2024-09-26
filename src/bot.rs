@@ -1,4 +1,4 @@
-use crate::provider::{get_provider, SignerProvider};
+use crate::provider::SignerProvider;
 use alloy::sol;
 use alloy::{providers::WalletProvider, transports::BoxTransport};
 use alloy_primitives::{Address, U256};
@@ -26,12 +26,15 @@ sol! {
     }
 }
 
-pub struct AaveLooper {
+type Token = IERC20Instance<BoxTransport, Arc<SignerProvider>>;
+type LendingPool = ILendingPoolInstance<BoxTransport, Arc<SignerProvider>>;
+
+pub struct AaveBot {
     provider: Arc<SignerProvider>,
     signer_address: Address,
     asset_address: Address,
-    lending_pool: ILendingPoolInstance<BoxTransport, Arc<SignerProvider>>,
-    asset: IERC20Instance<BoxTransport, Arc<SignerProvider>>,
+    lending_pool: LendingPool,
+    asset: Token,
     max_amount: U256,
     leverage: u8,
     threshold: U256,
@@ -39,7 +42,7 @@ pub struct AaveLooper {
     // chat_id: i64,
 }
 
-impl AaveLooper {
+impl AaveBot {
     pub async fn new(
         provider: Arc<SignerProvider>,
         aave_address: Address,
@@ -157,34 +160,54 @@ impl AaveLooper {
         Ok(())
     }
 
-    pub async fn enter_position(&self) -> Result<(), Box<dyn Error>> {
-        // Approve AAVE to spend our tokens
-        let tx = self
-            .asset
-            .approve(*self.lending_pool.address(), self.max_amount);
+    pub async fn approve_tokens(&self, token: Token, amount: U256) -> Result<(), Box<dyn Error>> {
+        let tx = token.approve(*self.lending_pool.address(), amount);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Approved AAVE to spend tokens: {:?}", receipt);
+        Ok(())
+    }
 
-        // Supply assets to AAVE
-        let tx =
-            self.lending_pool
-                .supply_0(self.asset_address, self.max_amount, self.signer_address, 0);
+    pub async fn supply_tokens(
+        &self,
+        token_address: Address,
+        amount: U256,
+    ) -> Result<(), Box<dyn Error>> {
+        let tx = self
+            .lending_pool
+            .supply_0(token_address, amount, self.signer_address, 0);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Supplied assets to AAVE: {:?}", receipt);
+        Ok(())
+    }
 
-        // // Calculate borrow amount based on leverage
-        // let borrow_amount = self.amount * U256::from(self.leverage - 1) / U256::from(self.leverage);
+    pub async fn borrow_tokens(
+        &self,
+        token_address: Address,
+        amount: U256,
+    ) -> Result<(), Box<dyn Error>> {
+        let tx = self.lending_pool.borrow_0(
+            token_address,
+            amount,
+            U256::from(2),
+            0,
+            self.signer_address,
+        );
+        let receipt = tx.send().await?.get_receipt().await?;
+        println!("Borrowed assets from AAVE: {:?}", receipt);
+        Ok(())
+    }
 
-        // // Borrow assets from AAVE
-        // let tx = self.aave.borrow(
-        //     self.asset_address,
-        //     U256::from(borrow_amount),
-        //     U256::from(2),
-        //     0,
-        //     self.signer_address,
-        // );
-        // let receipt = tx.send().await?.get_receipt().await?;
-        // println!("Borrowed assets from AAVE: {:?}", receipt);
+    pub async fn enter_position(&self) -> Result<(), Box<dyn Error>> {
+        // Approve AAVE to spend our tokens
+        self.approve_tokens(self.asset.clone(), self.max_amount)
+            .await?;
+
+        // Supply assets to AAVE
+        self.supply_tokens(self.asset_address, self.max_amount)
+            .await?;
+
+        self.borrow_tokens(self.asset_address, self.max_amount / U256::from(2))
+            .await?;
 
         Ok(())
     }
