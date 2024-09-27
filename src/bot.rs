@@ -160,7 +160,12 @@ impl AaveBot {
         Ok(())
     }
 
-    pub async fn approve_tokens(&self, token: Token, amount: U256) -> Result<(), Box<dyn Error>> {
+    pub async fn approve_tokens(
+        &self,
+        asset_address: Address,
+        amount: U256,
+    ) -> Result<(), Box<dyn Error>> {
+        let token = IERC20::new(asset_address, self.provider.clone());
         let tx = token.approve(*self.lending_pool.address(), amount);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Approved AAVE to spend tokens: {:?}", receipt);
@@ -197,9 +202,22 @@ impl AaveBot {
         Ok(())
     }
 
+    pub async fn repay_tokens(
+        &self,
+        token_address: Address,
+        amount: U256,
+    ) -> Result<(), Box<dyn Error>> {
+        let tx =
+            self.lending_pool
+                .repay_1(token_address, amount, U256::from(2), self.signer_address);
+        let receipt = tx.send().await?.get_receipt().await?;
+        println!("Repaid assets to AAVE: {:?}", receipt);
+        Ok(())
+    }
+
     pub async fn enter_position(&self) -> Result<(), Box<dyn Error>> {
         // Approve AAVE to spend our tokens
-        self.approve_tokens(self.asset.clone(), self.max_amount)
+        self.approve_tokens(self.asset_address, self.max_amount)
             .await?;
 
         // Supply assets to AAVE
