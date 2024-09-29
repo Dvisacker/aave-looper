@@ -20,7 +20,6 @@ contract AaveLooper is ImmutableOwnable {
     uint256 public constant USE_VARIABLE_DEBT = 2;
     uint256 public constant SAFE_BUFFER = 10; // wei
 
-    ERC20 public immutable ASSET; // solhint-disable-line
     ILendingPool public immutable LENDING_POOL; // solhint-disable-line
     IAaveIncentivesController public immutable INCENTIVES; // solhint-disable-line
 
@@ -52,7 +51,7 @@ contract AaveLooper is ImmutableOwnable {
 
     // ---- views ----
 
-    function getSupplyAndBorrowAssets(address asset) public view returns (address[] memory assets) {
+    function getDerivedAssets(address asset) public view returns (address[] memory assets) {
         DataTypes.ReserveData memory data = LENDING_POOL.getReserveData(asset);
         assets = new address[](2);
         assets[0] = data.aTokenAddress;
@@ -104,7 +103,7 @@ contract AaveLooper is ImmutableOwnable {
      * @return Pending rewards
      */
     function getPendingRewards(address asset) public view returns (uint256) {
-        return INCENTIVES.getRewardsBalance(getSupplyAndBorrowAssets(asset), address(this));
+        return INCENTIVES.getRewardsBalance(getDerivedAssets(asset), address(this));
     }
 
     /**
@@ -128,8 +127,8 @@ contract AaveLooper is ImmutableOwnable {
     /**
      * @return LTV of ASSET in 4 decimals ex. 82.5% == 8250
      */
-    function getLTV() public view returns (uint256) {
-        DataTypes.ReserveConfigurationMap memory config = LENDING_POOL.getConfiguration(address(ASSET));
+    function getLTV(address asset) public view returns (uint256) {
+        DataTypes.ReserveConfigurationMap memory config = LENDING_POOL.getConfiguration(asset);
         return config.data & 0xffff; // bits 0-15 in BE
     }
 
@@ -139,7 +138,7 @@ contract AaveLooper is ImmutableOwnable {
      * Claims and transfers all pending rewards to OWNER
      */
     function claimRewardsToOwner(address asset) external {
-        INCENTIVES.claimRewards(getSupplyAndBorrowAssets(asset), type(uint256).max, OWNER);
+        INCENTIVES.claimRewards(getDerivedAssets(asset), type(uint256).max, OWNER);
     }
 
     // ---- main ----
@@ -148,8 +147,12 @@ contract AaveLooper is ImmutableOwnable {
      * @param iterations - Loop count
      * @return Liquidity at end of the loop
      */
-    function enterPositionFully(uint256 iterations) external onlyOwner returns (uint256) {
-        return enterPosition(address(ASSET), ASSET.balanceOf(msg.sender), iterations);
+    function enterPositionFully(address supplyAsset, address borrowAsset, uint256 iterations)
+        external
+        onlyOwner
+        returns (uint256)
+    {
+        return enterPosition(supplyAsset, borrowAsset, ERC20(supplyAsset).balanceOf(msg.sender), iterations);
     }
 
     /**
@@ -157,40 +160,60 @@ contract AaveLooper is ImmutableOwnable {
      * @param iterations - Loop count
      * @return Liquidity at end of the loop
      */
-    function enterPosition(address asset, uint256 principal, uint256 iterations) public onlyOwner returns (uint256) {
+    function enterPosition(address supplyAsset, address borrowAsset, uint256 principal, uint256 iterations)
+        public
+        onlyOwner
+        returns (uint256)
+    {
         if (principal > 0) {
-            ASSET.safeTransferFrom(msg.sender, address(this), principal);
+            ERC20(supplyAsset).transferFrom(msg.sender, address(this), principal);
         }
 
-        if (getAssetBalance(asset) > 0) {
-            _supply(asset, getAssetBalance(asset));
+        if (getAssetBalance(supplyAsset) > 0) {
+            _supply(supplyAsset, getAssetBalance(supplyAsset));
         }
 
         for (uint256 i = 0; i < iterations; i++) {
-            _borrow(getLiquidity(asset) - SAFE_BUFFER);
-            _supply(asset, getAssetBalance(asset));
+            _borrow(borrowAsset, getLiquidity(borrowAsset) - SAFE_BUFFER);
+            _swap(
+                SwapParams({
+                    tokenIn: supplyAsset,
+                    tokenOut: borrowAsset,
+                    amountIn: getAssetBalance(supplyAsset),
+                    minReturnAmount: 0,
+                    recipient: payable(address(this)),
+                    flags: 0,
+                    permit: bytes(""),
+                    data: bytes("")
+                })
+            );
+            _supply(supplyAsset, getAssetBalance(supplyAsset));
         }
 
-        return getLiquidity(asset);
+        return getLiquidity(supplyAsset);
     }
 
     /**
      * @param iterations - MAX loop count
      * @return Withdrawn amount of ASSET to OWNER
      */
-    function exitPosition(address asset, uint256 iterations) external onlyOwner returns (uint256) {
+    function exitPosition(address supplyAsset, address borrowAsset, uint256 iterations)
+        external
+        onlyOwner
+        returns (uint256)
+    {
         (,,,, uint256 ltv,) = getPositionData(); // 4 decimals
 
-        for (uint256 i = 0; i < iterations && getBorrowBalance(asset) > 0; i++) {
-            _redeemSupply(((getLiquidity(asset) * 1e4) / ltv) - SAFE_BUFFER);
-            _repayBorrow(getAssetBalance(asset));
+        for (uint256 i = 0; i < iterations && getBorrowBalance(borrowAsset) > 0; i++) {
+            _redeemSupply(supplyAsset, ((getLiquidity(supplyAsset) * 1e4) / ltv) - SAFE_BUFFER);
+            _repayBorrow(borrowAsset, getAssetBalance(borrowAsset));
         }
 
-        if (getBorrowBalance(asset) == 0) {
-            _redeemSupply(type(uint256).max);
+        if (getBorrowBalance(borrowAsset) == 0) {
+            _redeemSupply(supplyAsset, type(uint256).max);
         }
 
-        return _withdrawToOwner(address(ASSET));
+        return _withdrawToOwner(supplyAsset);
     }
 
     // ---- internals, public onlyOwner in case of emergency ----
@@ -199,30 +222,30 @@ contract AaveLooper is ImmutableOwnable {
      * amount in ASSET
      */
     function _supply(address asset, uint256 amount) public onlyOwner {
-        ASSET.safeIncreaseAllowance(address(LENDING_POOL), amount);
+        ERC20(asset).safeIncreaseAllowance(address(LENDING_POOL), amount);
         LENDING_POOL.deposit(asset, amount, address(this), 0);
     }
 
     /**
      * amount in ASSET
      */
-    function _borrow(uint256 amount) public onlyOwner {
-        LENDING_POOL.borrow(address(ASSET), amount, USE_VARIABLE_DEBT, 0, address(this));
+    function _borrow(address asset, uint256 amount) public onlyOwner {
+        LENDING_POOL.borrow(asset, amount, USE_VARIABLE_DEBT, 0, address(this));
     }
 
     /**
      * amount in ASSET
      */
-    function _redeemSupply(uint256 amount) public onlyOwner {
-        LENDING_POOL.withdraw(address(ASSET), amount, address(this));
+    function _redeemSupply(address asset, uint256 amount) public onlyOwner {
+        LENDING_POOL.withdraw(asset, amount, address(this));
     }
 
     /**
      * amount in ASSET
      */
-    function _repayBorrow(uint256 amount) public onlyOwner {
-        ASSET.safeIncreaseAllowance(address(LENDING_POOL), amount);
-        LENDING_POOL.repay(address(ASSET), amount, USE_VARIABLE_DEBT, address(this));
+    function _repayBorrow(address asset, uint256 amount) public onlyOwner {
+        ERC20(asset).safeIncreaseAllowance(address(LENDING_POOL), amount);
+        LENDING_POOL.repay(asset, amount, USE_VARIABLE_DEBT, address(this));
     }
 
     function _withdrawToOwner(address asset) public onlyOwner returns (uint256) {
@@ -243,7 +266,7 @@ contract AaveLooper is ImmutableOwnable {
 
     // -- swap --
 
-    function swapVia1inch(SwapParams memory params) external {
+    function _swap(SwapParams memory params) public onlyOwner {
         IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
         IERC20(params.tokenIn).approve(AGGREGATION_ROUTER_V5, params.amountIn);
 
