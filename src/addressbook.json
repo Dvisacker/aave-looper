@@ -2,6 +2,8 @@
     "arbitrum": {
         "aave_lending_pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
         "aave_incentives": "0x929EC64c34a17401F460460D4B9390518E5B473e",
+        "uniswap_v3_factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+        "uniswap_v3_router": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         "tokens": {
             "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
             "USDT": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
@@ -12,6 +14,8 @@
     "mainnet": {
         "aave_lending_pool": "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9",
         "aave_incentives": "0x8164Cc65827dcFe994AB23944CBC90e0aa80bFcb",
+        "uniswap_v3_factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+        "uniswap_v3_router": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         "tokens": {
             "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
             "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -22,6 +26,8 @@
     "sepolia": {
         "aave_lending_pool": "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
         "aave_incentives": "0x4DA5c4da71C5a167171cC839487536d86e083483",
+        "uniswap_v3_factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+        "uniswap_v3_router": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
         "tokens": {
             "USDC": "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
             "DAI": "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
