@@ -29,16 +29,24 @@ rust-check:
 	@cd $(BINDINGS_DIR) && $(CARGO) check
 
 # Solidity commands
-sol-build:
+forge-build:
 	@echo "Building Solidity contracts..."
 	@cd $(CONTRACTS_DIR) && $(FORGE) build
 
-sol-test:
+forge-compile:
+	@echo "Compiling Solidity contracts..."
+	@cd $(CONTRACTS_DIR) && $(FORGE) compile
+
+forge-test:
 	@echo "Running Solidity tests..."
 	@cd $(CONTRACTS_DIR) && $(FORGE) test
 
+forge-clean:
+	@echo "Cleaning Solidity build artifacts..."
+	@cd $(CONTRACTS_DIR) && $(FORGE) clean
+
 # This command will generate an error (no cargo.toml) that can be ignored because we are generating the bindings in a subcrate of the src folder
-sol-bind:
+forge-bind:
 	@echo "Generating Rust bindings for Solidity contracts..."
 	@cd $(CONTRACTS_DIR) && forge bind --alloy --bindings-path ../src/bindings --crate-name bindings --alloy-version 0.3.3 --module
 
@@ -46,7 +54,7 @@ deploy:
 	@echo "Deploying AaveLooper..."
 	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper $(NETWORK_ARGS)
 
-deploy_local:
+deploy-local:
 	@echo "Deploying AaveLooper on Local..."
 	NETWORK_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY) --broadcast
 	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper $(NETWORK_ARGS)
@@ -56,19 +64,41 @@ deploy-sepolia:
 	NETWORK_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper $(NETWORK_ARGS)
 
+deploy-local-fork:
+	@echo "Deploying AaveLooper on Local Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
 deploy-arbitrum:
 	@echo "Deploying AaveLooper on Arbitrum..."
-	NETWORK_ARGS := --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --arbiscan-api-key $(ARBISCAN_API_KEY) -vvvv
-	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper $(NETWORK_ARGS)
+	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
 
 deploy-mainnet:
-	j@echo "Deploying AaveLooper on Mainnet..."
-	NETWORK_ARGS := --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
-	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper $(NETWORK_ARGS)
+	@echo "Deploying AaveLooper on Mainnet..."
+	@cd $(CONTRACTS_DIR) && forge script script/DeployAaveLooper.s.sol:DeployAaveLooper --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
-enter-aave-position:
-	@echo "Entering Aave position..."
-	@cd $(CONTRACTS_DIR) && forge script script/EnterAavePosition.s.sol:EnterAavePosition $(NETWORK_ARGS)
+leverage-local-fork:
+	@echo "Leveraging on Local..."
+	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
+leverage-arbitrum:
+	@echo "Leveraging on Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+
+leverage-mainnet:
+	@echo "Leveraging on Mainnet..."
+	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+
+get-position-local-fork:
+	@echo "Getting position on Local..."
+	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
+get-position-arbitrum:
+	@echo "Getting position on Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+
+get-position-mainnet:
+	@echo "Getting position on Mainnet..."
+	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
 # Combined commands
 build: rust-build sol-build
