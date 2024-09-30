@@ -29,6 +29,7 @@ contract GetPosition is Script {
             uint256 healthFactor
         ) = looper.getPositionData();
 
+        console2.log("Contract address:", aaveLooper);
         console2.log("Total collateral:", totalCollateral);
         console2.log("Total debt:", totalDebt);
         console2.log("Available borrows:", availableBorrows);

@@ -253,6 +253,40 @@ contract AaveLooper is ImmutableOwnable {
         return getLiquidity(supplyAsset);
     }
 
+    function exitPositionWithFlashLoan(address supplyAsset, address borrowAsset) external onlyOwner returns (uint256) {
+        uint256 borrowBalance = getBorrowBalance(borrowAsset);
+
+        // Request a flash loan for the borrow balance
+        LENDING_POOL.flashLoanSimple(address(this), borrowAsset, borrowBalance, abi.encode(supplyAsset, borrowAsset), 0);
+
+        // After the flash loan, withdraw any remaining supply and send to owner
+        _redeemSupply(supplyAsset, type(uint256).max);
+        return _withdrawToOwner(supplyAsset);
+    }
+
+    // flash loan callback
+    function executeOperation(address asset, uint256 amount, uint256 premium, address initiator, bytes calldata params)
+        external
+        returns (bool)
+    {
+        require(msg.sender == address(LENDING_POOL), "Caller must be lending pool");
+        require(initiator == address(this), "Initiator must be this contract");
+
+        (address supplyAsset, address borrowAsset) = abi.decode(params, (address, address));
+
+        // Repay the borrowed amount
+        _repayBorrow(borrowAsset, amount);
+
+        // Withdraw the supply
+        _redeemSupply(supplyAsset, type(uint256).max);
+
+        // Approve the flash loan repayment
+        uint256 amountOwed = amount + premium;
+        ERC20(asset).approve(address(LENDING_POOL), amountOwed);
+
+        return true;
+    }
+
     /**
      * @param iterations - MAX loop count
      * @return Withdrawn amount of ASSET to OWNER
@@ -326,59 +360,59 @@ contract AaveLooper is ImmutableOwnable {
 
     // -- swap --
 
-    function _swap(SwapParams memory params) public onlyOwner {
-        // IERC20(params.tokenIn).approve(AGGREGATION_ROUTER_V5, params.amountIn);
-        // IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
+    // function _swap(SwapParams memory params) public onlyOwner {
+    //     // IERC20(params.tokenIn).approve(AGGREGATION_ROUTER_V5, params.amountIn);
+    //     // IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
 
-        // IAggregationRouterV5.SwapDescription memory desc = IAggregationRouterV5.SwapDescription({
-        //     srcToken: IERC20(params.tokenIn),
-        //     dstToken: IERC20(params.tokenOut),
-        //     srcReceiver: payable(address(this)),
-        //     dstReceiver: params.recipient,
-        //     amount: params.amountIn,
-        //     minReturnAmount: params.minReturnAmount,
-        //     flags: params.flags
-        // });
+    //     // IAggregationRouterV5.SwapDescription memory desc = IAggregationRouterV5.SwapDescription({
+    //     //     srcToken: IERC20(params.tokenIn),
+    //     //     dstToken: IERC20(params.tokenOut),
+    //     //     srcReceiver: payable(address(this)),
+    //     //     dstReceiver: params.recipient,
+    //     //     amount: params.amountIn,
+    //     //     minReturnAmount: params.minReturnAmount,
+    //     //     flags: params.flags
+    //     // });
 
-        // console2.log("Swapping", params.tokenIn, "to", params.tokenOut);
+    //     // console2.log("Swapping", params.tokenIn, "to", params.tokenOut);
 
-        // IAggregationRouterV5(AGGREGATION_ROUTER_V5).swap(
-        //     address(0), // executor (0 for default)
-        //     desc,
-        //     params.permit,
-        //     params.data
-        // );
+    //     // IAggregationRouterV5(AGGREGATION_ROUTER_V5).swap(
+    //     //     address(0), // executor (0 for default)
+    //     //     desc,
+    //     //     params.permit,
+    //     //     params.data
+    //     // );
 
-        // // If there are any leftover tokens, send them back to the user
-        // uint256 leftover = IERC20(params.tokenIn).balanceOf(address(this));
-        // if (leftover > 0) {
-        //     IERC20(params.tokenIn).transfer(msg.sender, leftover);
-        // }
-    }
+    //     // // If there are any leftover tokens, send them back to the user
+    //     // uint256 leftover = IERC20(params.tokenIn).balanceOf(address(this));
+    //     // if (leftover > 0) {
+    //     //     IERC20(params.tokenIn).transfer(msg.sender, leftover);
+    //     // }
+    // }
 
-    function swapExactTokensForTokensV3(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address to,
-        uint256 deadline
-    ) public onlyOwner returns (uint256) {
-        // IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenIn).approve(UNISWAP_V3_ROUTER, amountIn);
+    // function swapExactTokensForTokensV3(
+    //     address tokenIn,
+    //     address tokenOut,
+    //     uint24 fee,
+    //     uint256 amountIn,
+    //     uint256 amountOutMin,
+    //     address to,
+    //     uint256 deadline
+    // ) public onlyOwner returns (uint256) {
+    //     // IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+    //     IERC20(tokenIn).approve(UNISWAP_V3_ROUTER, amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
-            fee: fee,
-            recipient: to,
-            deadline: deadline,
-            amountIn: amountIn,
-            amountOutMinimum: amountOutMin,
-            sqrtPriceLimitX96: 0
-        });
+    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+    //         tokenIn: tokenIn,
+    //         tokenOut: tokenOut,
+    //         fee: fee,
+    //         recipient: to,
+    //         deadline: deadline,
+    //         amountIn: amountIn,
+    //         amountOutMinimum: amountOutMin,
+    //         sqrtPriceLimitX96: 0
+    //     });
 
-        return ISwapRouter(UNISWAP_V3_ROUTER).exactInputSingle(params);
-    }
+    //     return ISwapRouter(UNISWAP_V3_ROUTER).exactInputSingle(params);
+    // }
 }

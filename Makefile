@@ -88,6 +88,18 @@ leverage-mainnet:
 	@echo "Leveraging on Mainnet..."
 	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
+exit-with-flashloan-local-fork:
+	@echo "Exiting with flashloan on Local..."
+	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
+exit-with-flashloan-arbitrum:
+	@echo "Exiting with flashloan on Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+
+exit-with-flashloan-mainnet:
+	@echo "Exiting with flashloan on Mainnet..."
+	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+
 get-position-local-fork:
 	@echo "Getting position on Local..."
 	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
