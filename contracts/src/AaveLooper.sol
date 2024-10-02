@@ -230,27 +230,33 @@ contract AaveLooper is ImmutableOwnable {
         for (uint256 i = 0; i < iterations; i++) {
             _borrow(borrowAsset, getAvailableBorrowAmount(borrowAsset) - SAFE_BUFFER);
             uint256 amountToSwap = getAssetBalance(borrowAsset);
-            uint256 minReturn = 1; // Set a very low minReturn for simplicity, consider using a better estimate in production
-
-            ERC20(borrowAsset).approve(UNISWAP_V3_ROUTER, amountToSwap);
-
-            ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-                tokenIn: borrowAsset,
-                tokenOut: supplyAsset,
-                fee: feeTier,
-                recipient: address(this),
-                deadline: block.timestamp + 300, // 5 minutes deadline
-                amountIn: amountToSwap,
-                amountOutMinimum: minReturn,
-                sqrtPriceLimitX96: 0
-            });
-
-            uint256 amountOut = ISwapRouter(UNISWAP_V3_ROUTER).exactInputSingle(params);
-            require(amountOut >= minReturn, "Insufficient output amount");
+            swapUniswapV3(borrowAsset, supplyAsset, amountToSwap, feeTier);
             _supply(supplyAsset, getAssetBalance(supplyAsset));
         }
 
         return getLiquidity(supplyAsset);
+    }
+
+    function swapUniswapV3(address tokenIn, address tokenOut, uint256 amountIn, uint24 feeTier)
+        public
+        onlyOwner
+        returns (uint256)
+    {
+        ERC20(tokenIn).approve(UNISWAP_V3_ROUTER, amountIn);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            fee: feeTier,
+            recipient: address(this),
+            deadline: block.timestamp + 300, // 5 minutes deadline
+            amountIn: amountIn,
+            amountOutMinimum: 1,
+            sqrtPriceLimitX96: 0
+        });
+
+        uint256 amountOut = ISwapRouter(UNISWAP_V3_ROUTER).exactInputSingle(params);
+        return amountOut;
     }
 
     function exitPositionWithFlashLoan(address supplyAsset, address borrowAsset) external onlyOwner returns (uint256) {
@@ -288,19 +294,28 @@ contract AaveLooper is ImmutableOwnable {
     }
 
     /**
-     * @param iterations - MAX loop count
+     * @param supplyAsset - ASSET to withdraw
+     * @param borrowAsset - ASSET to repay
+     * @param maxIterations - MAX loop count
      * @return Withdrawn amount of ASSET to OWNER
      */
-    function exitPosition(address supplyAsset, address borrowAsset, uint256 iterations)
+    function exitPosition(address supplyAsset, address borrowAsset, uint256 maxIterations, uint24 feeTier)
         external
         onlyOwner
         returns (uint256)
     {
-        (,,,, uint256 ltv,) = getPositionData(); // 4 decimals
+        (, uint256 totalDebt,,, uint256 ltv,) = getPositionData(); // 4 decimals
+        uint256 iterations = 0;
 
-        for (uint256 i = 0; i < iterations && getBorrowBalance(borrowAsset) > 0; i++) {
+        console2.log("Total debt:", totalDebt);
+        console2.log("LTV:", ltv);
+
+        while (totalDebt > 10000 && iterations < maxIterations) {
             _redeemSupply(supplyAsset, ((getLiquidity(supplyAsset) * 1e4) / ltv) - SAFE_BUFFER);
+            swapUniswapV3(supplyAsset, borrowAsset, getAssetBalance(supplyAsset), feeTier);
             _repayBorrow(borrowAsset, getAssetBalance(borrowAsset));
+            totalDebt = getBorrowBalance(borrowAsset);
+            iterations++;
         }
 
         if (getBorrowBalance(borrowAsset) == 0) {
@@ -357,62 +372,4 @@ contract AaveLooper is ImmutableOwnable {
     function emergencyFunctionDelegateCall(address target, bytes memory data) external onlyOwner {
         Address.functionDelegateCall(target, data);
     }
-
-    // -- swap --
-
-    // function _swap(SwapParams memory params) public onlyOwner {
-    //     // IERC20(params.tokenIn).approve(AGGREGATION_ROUTER_V5, params.amountIn);
-    //     // IERC20(params.tokenIn).transferFrom(msg.sender, address(this), params.amountIn);
-
-    //     // IAggregationRouterV5.SwapDescription memory desc = IAggregationRouterV5.SwapDescription({
-    //     //     srcToken: IERC20(params.tokenIn),
-    //     //     dstToken: IERC20(params.tokenOut),
-    //     //     srcReceiver: payable(address(this)),
-    //     //     dstReceiver: params.recipient,
-    //     //     amount: params.amountIn,
-    //     //     minReturnAmount: params.minReturnAmount,
-    //     //     flags: params.flags
-    //     // });
-
-    //     // console2.log("Swapping", params.tokenIn, "to", params.tokenOut);
-
-    //     // IAggregationRouterV5(AGGREGATION_ROUTER_V5).swap(
-    //     //     address(0), // executor (0 for default)
-    //     //     desc,
-    //     //     params.permit,
-    //     //     params.data
-    //     // );
-
-    //     // // If there are any leftover tokens, send them back to the user
-    //     // uint256 leftover = IERC20(params.tokenIn).balanceOf(address(this));
-    //     // if (leftover > 0) {
-    //     //     IERC20(params.tokenIn).transfer(msg.sender, leftover);
-    //     // }
-    // }
-
-    // function swapExactTokensForTokensV3(
-    //     address tokenIn,
-    //     address tokenOut,
-    //     uint24 fee,
-    //     uint256 amountIn,
-    //     uint256 amountOutMin,
-    //     address to,
-    //     uint256 deadline
-    // ) public onlyOwner returns (uint256) {
-    //     // IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-    //     IERC20(tokenIn).approve(UNISWAP_V3_ROUTER, amountIn);
-
-    //     ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-    //         tokenIn: tokenIn,
-    //         tokenOut: tokenOut,
-    //         fee: fee,
-    //         recipient: to,
-    //         deadline: deadline,
-    //         amountIn: amountIn,
-    //         amountOutMinimum: amountOutMin,
-    //         sqrtPriceLimitX96: 0
-    //     });
-
-    //     return ISwapRouter(UNISWAP_V3_ROUTER).exactInputSingle(params);
-    // }
 }

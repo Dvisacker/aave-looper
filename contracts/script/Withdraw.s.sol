@@ -8,7 +8,7 @@ import {console2} from "forge-std/console2.sol";
 import {DevOpsTools} from "../lib/foundry-devops/src/DevOpsTools.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
-contract Leverage is Script {
+contract ExitWithFlashloan is Script {
     HelperConfig helperConfig = new HelperConfig();
     address aaveLooper = DevOpsTools.get_most_recent_deployment("AaveLooper", block.chainid);
     address supplyAsset;
@@ -22,22 +22,14 @@ contract Leverage is Script {
         supplyAsset = vm.envOr("SUPPLY_ASSET", networkConfig.usdc);
         borrowAsset = vm.envOr("BORROW_ASSET", networkConfig.weth);
         initialAmount = vm.envOr("INITIAL_AMOUNT", uint256(1000000));
-        iterations = vm.envOr("ITERATIONS", uint256(3));
-
-        // address uniswapV3Factory = networkConfig.uniswapV3Factory;
 
         AaveLooper looper = AaveLooper(aaveLooper);
 
-        // (uint24 bestFeeTier, uint256 amountOut) =
-        // looper.getBestFeeTier(uniswapV3Factory, supplyAsset, borrowAsset, initialAmount);
-        // console2.log("Best fee tier:", bestFeeTier);
-        // console2.log("Amount out:", amountOut);
+        console2.log("Supply asset:", supplyAsset);
+        console2.log("Borrow asset:", borrowAsset);
 
         vm.startBroadcast();
-        ERC20(supplyAsset).approve(aaveLooper, initialAmount);
-        uint256 liquidity = looper.enterPosition(supplyAsset, borrowAsset, initialAmount, iterations, 500);
+        looper.exitPositionWithFlashLoan(supplyAsset, borrowAsset);
         vm.stopBroadcast();
-
-        console2.log("Entered position. Final liquidity:", liquidity);
     }
 }

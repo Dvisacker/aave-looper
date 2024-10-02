@@ -82,23 +82,44 @@ leverage-local-fork:
 
 leverage-arbitrum:
 	@echo "Leveraging on Arbitrum..."
-	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
 
 leverage-mainnet:
 	@echo "Leveraging on Mainnet..."
-	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/Leverage.s.sol:Leverage --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vv
 
-exit-with-flashloan-local-fork:
+flashloan-exit-local-fork:
 	@echo "Exiting with flashloan on Local..."
 	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
 
-exit-with-flashloan-arbitrum:
+flashloan-exit-arbitrum:
 	@echo "Exiting with flashloan on Arbitrum..."
-	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
 
-exit-with-flashloan-mainnet:
+flashloan-exit-mainnet:
 	@echo "Exiting with flashloan on Mainnet..."
-	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/ExitWithFlashloan.s.sol:ExitWithFlashloan --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vv
+
+exit-local-fork:
+	@echo "Exiting on Local..."
+	@cd $(CONTRACTS_DIR) && forge script script/Exit.s.sol:Exit --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
+exit-arbitrum:
+	@echo "Exiting on Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/Exit.s.sol:Exit --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
+
+exit-mainnet:
+	@echo "Exiting on Mainnet..."
+	@cd $(CONTRACTS_DIR) && forge script script/Exit.s.sol:Exit --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vv
+
+repay-local-fork:
+	@echo "Repaying on Local..."
+	@cd $(CONTRACTS_DIR) && forge script script/Repay.s.sol:Repay --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
+
+repay-arbitrum:
+	@echo "Repaying on Arbitrum..."
+	@cd $(CONTRACTS_DIR) && forge script script/Repay.s.sol:Repay --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
+
 
 get-position-local-fork:
 	@echo "Getting position on Local..."
@@ -106,11 +127,13 @@ get-position-local-fork:
 
 get-position-arbitrum:
 	@echo "Getting position on Arbitrum..."
-	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
 
 get-position-mainnet:
 	@echo "Getting position on Mainnet..."
-	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vv
+
+
 
 # Combined commands
 build: rust-build sol-build
