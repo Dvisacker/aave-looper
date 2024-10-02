@@ -12,7 +12,6 @@ import {IPoolAddressesProvider} from "../lib/aave-v3-core/contracts/interfaces/I
 import {IUniswapV3Pool} from "../lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3Factory} from "../lib/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "./ImmutableOwnable.sol";
-import {console2} from "forge-std/console2.sol";
 
 interface ISwapRouter {
     struct ExactInputSingleParams {
@@ -306,9 +305,6 @@ contract AaveLooper is ImmutableOwnable {
     {
         (, uint256 totalDebt,,, uint256 ltv,) = getPositionData(); // 4 decimals
         uint256 iterations = 0;
-
-        console2.log("Total debt:", totalDebt);
-        console2.log("LTV:", ltv);
 
         while (totalDebt > 10000 && iterations < maxIterations) {
             _redeemSupply(supplyAsset, ((getLiquidity(supplyAsset) * 1e4) / ltv) - SAFE_BUFFER);

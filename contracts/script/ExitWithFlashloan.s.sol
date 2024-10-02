@@ -25,9 +25,6 @@ contract ExitWithFlashloan is Script {
 
         AaveLooper looper = AaveLooper(aaveLooper);
 
-        console2.log("Supply asset:", supplyAsset);
-        console2.log("Borrow asset:", borrowAsset);
-
         vm.startBroadcast();
         looper.exitPositionWithFlashLoan(supplyAsset, borrowAsset);
         vm.stopBroadcast();

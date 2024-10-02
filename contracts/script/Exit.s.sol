@@ -25,9 +25,6 @@ contract Exit is Script {
 
         AaveLooper looper = AaveLooper(aaveLooper);
 
-        console2.log("Supply asset:", supplyAsset);
-        console2.log("Borrow asset:", borrowAsset);
-
         vm.startBroadcast();
         looper.exitPosition(supplyAsset, borrowAsset, 5, 500);
         vm.stopBroadcast();

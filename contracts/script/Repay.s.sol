@@ -26,9 +26,6 @@ contract Repay is Script {
 
         AaveLooper looper = AaveLooper(aaveLooper);
 
-        console2.log("Supply asset:", supplyAsset);
-        console2.log("Borrow asset:", borrowAsset);
-
         vm.startBroadcast();
         looper._repayBorrow(borrowAsset, 1);
         vm.stopBroadcast();

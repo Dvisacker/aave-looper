@@ -24,14 +24,7 @@ contract Leverage is Script {
         initialAmount = vm.envOr("INITIAL_AMOUNT", uint256(1000000));
         iterations = vm.envOr("ITERATIONS", uint256(3));
 
-        // address uniswapV3Factory = networkConfig.uniswapV3Factory;
-
         AaveLooper looper = AaveLooper(aaveLooper);
-
-        // (uint24 bestFeeTier, uint256 amountOut) =
-        // looper.getBestFeeTier(uniswapV3Factory, supplyAsset, borrowAsset, initialAmount);
-        // console2.log("Best fee tier:", bestFeeTier);
-        // console2.log("Amount out:", amountOut);
 
         vm.startBroadcast();
         ERC20(supplyAsset).approve(aaveLooper, initialAmount);
