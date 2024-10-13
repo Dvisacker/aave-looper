@@ -370,8 +370,8 @@ error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 nee
     #[derive(Clone)]
     pub struct ERC20InsufficientAllowance {
         pub spender: alloy::sol_types::private::Address,
-        pub allowance: alloy::sol_types::private::U256,
-        pub needed: alloy::sol_types::private::U256,
+        pub allowance: alloy::sol_types::private::primitives::aliases::U256,
+        pub needed: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -385,8 +385,8 @@ error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 nee
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -457,8 +457,8 @@ error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     #[derive(Clone)]
     pub struct ERC20InsufficientBalance {
         pub sender: alloy::sol_types::private::Address,
-        pub balance: alloy::sol_types::private::U256,
-        pub needed: alloy::sol_types::private::U256,
+        pub balance: alloy::sol_types::private::primitives::aliases::U256,
+        pub needed: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -472,8 +472,8 @@ error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -808,7 +808,7 @@ event Approval(address indexed owner, address indexed spender, uint256 value);
         #[allow(missing_docs)]
         pub spender: alloy::sol_types::private::Address,
         #[allow(missing_docs)]
-        pub value: alloy::sol_types::private::U256,
+        pub value: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -873,6 +873,21 @@ event Approval(address indexed owner, address indexed spender, uint256 value);
                 }
             }
             #[inline]
+            fn check_signature(
+                topics: &<Self::TopicList as alloy_sol_types::SolType>::RustType,
+            ) -> alloy_sol_types::Result<()> {
+                if topics.0 != Self::SIGNATURE_HASH {
+                    return Err(
+                        alloy_sol_types::Error::invalid_event_signature_hash(
+                            Self::SIGNATURE,
+                            topics.0,
+                            Self::SIGNATURE_HASH,
+                        ),
+                    );
+                }
+                Ok(())
+            }
+            #[inline]
             fn tokenize_body(&self) -> Self::DataToken<'_> {
                 (
                     <alloy::sol_types::sol_data::Uint<
@@ -933,7 +948,7 @@ event Transfer(address indexed from, address indexed to, uint256 value);
         #[allow(missing_docs)]
         pub to: alloy::sol_types::private::Address,
         #[allow(missing_docs)]
-        pub value: alloy::sol_types::private::U256,
+        pub value: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -998,6 +1013,21 @@ event Transfer(address indexed from, address indexed to, uint256 value);
                 }
             }
             #[inline]
+            fn check_signature(
+                topics: &<Self::TopicList as alloy_sol_types::SolType>::RustType,
+            ) -> alloy_sol_types::Result<()> {
+                if topics.0 != Self::SIGNATURE_HASH {
+                    return Err(
+                        alloy_sol_types::Error::invalid_event_signature_hash(
+                            Self::SIGNATURE,
+                            topics.0,
+                            Self::SIGNATURE_HASH,
+                        ),
+                    );
+                }
+                Ok(())
+            }
+            #[inline]
             fn tokenize_body(&self) -> Self::DataToken<'_> {
                 (
                     <alloy::sol_types::sol_data::Uint<
@@ -1060,7 +1090,7 @@ function allowance(address owner, address spender) external view returns (uint25
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct allowanceReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -1109,7 +1139,9 @@ function allowance(address owner, address spender) external view returns (uint25
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -1189,7 +1221,7 @@ function approve(address spender, uint256 value) external returns (bool);
     #[derive(Clone)]
     pub struct approveCall {
         pub spender: alloy::sol_types::private::Address,
-        pub value: alloy::sol_types::private::U256,
+        pub value: alloy::sol_types::private::primitives::aliases::U256,
     }
     ///Container type for the return parameters of the [`approve(address,uint256)`](approveCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
@@ -1209,7 +1241,7 @@ function approve(address spender, uint256 value) external returns (bool);
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Address,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -1329,7 +1361,7 @@ function balanceOf(address account) external view returns (uint256);
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct balanceOfReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -1369,7 +1401,9 @@ function balanceOf(address account) external view returns (uint256);
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -1785,7 +1819,7 @@ function totalSupply() external view returns (uint256);
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct totalSupplyReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -1825,7 +1859,9 @@ function totalSupply() external view returns (uint256);
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -1895,7 +1931,7 @@ function transfer(address to, uint256 value) external returns (bool);
     #[derive(Clone)]
     pub struct transferCall {
         pub to: alloy::sol_types::private::Address,
-        pub value: alloy::sol_types::private::U256,
+        pub value: alloy::sol_types::private::primitives::aliases::U256,
     }
     ///Container type for the return parameters of the [`transfer(address,uint256)`](transferCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
@@ -1915,7 +1951,7 @@ function transfer(address to, uint256 value) external returns (bool);
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Address,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -2031,7 +2067,7 @@ function transferFrom(address from, address to, uint256 value) external returns 
     pub struct transferFromCall {
         pub from: alloy::sol_types::private::Address,
         pub to: alloy::sol_types::private::Address,
-        pub value: alloy::sol_types::private::U256,
+        pub value: alloy::sol_types::private::primitives::aliases::U256,
     }
     ///Container type for the return parameters of the [`transferFrom(address,address,uint256)`](transferFromCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
@@ -2053,7 +2089,7 @@ function transferFrom(address from, address to, uint256 value) external returns 
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Address,
                 alloy::sol_types::private::Address,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -3020,7 +3056,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn approve(
             &self,
             spender: alloy::sol_types::private::Address,
-            value: alloy::sol_types::private::U256,
+            value: alloy::sol_types::private::primitives::aliases::U256,
         ) -> alloy_contract::SolCallBuilder<T, &P, approveCall, N> {
             self.call_builder(&approveCall { spender, value })
         }
@@ -3055,7 +3091,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn transfer(
             &self,
             to: alloy::sol_types::private::Address,
-            value: alloy::sol_types::private::U256,
+            value: alloy::sol_types::private::primitives::aliases::U256,
         ) -> alloy_contract::SolCallBuilder<T, &P, transferCall, N> {
             self.call_builder(&transferCall { to, value })
         }
@@ -3064,7 +3100,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
             from: alloy::sol_types::private::Address,
             to: alloy::sol_types::private::Address,
-            value: alloy::sol_types::private::U256,
+            value: alloy::sol_types::private::primitives::aliases::U256,
         ) -> alloy_contract::SolCallBuilder<T, &P, transferFromCall, N> {
             self.call_builder(
                 &transferFromCall {

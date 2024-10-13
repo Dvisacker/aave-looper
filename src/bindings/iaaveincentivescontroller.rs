@@ -362,14 +362,14 @@ function claimRewards(address[] memory assets, uint256 amount, address to) exter
     #[derive(Clone)]
     pub struct claimRewardsCall {
         pub assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-        pub amount: alloy::sol_types::private::U256,
+        pub amount: alloy::sol_types::private::primitives::aliases::U256,
         pub to: alloy::sol_types::private::Address,
     }
     ///Container type for the return parameters of the [`claimRewards(address[],uint256,address)`](claimRewardsCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct claimRewardsReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -384,7 +384,7 @@ function claimRewards(address[] memory assets, uint256 amount, address to) exter
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
                 alloy::sol_types::private::Address,
             );
             #[cfg(test)]
@@ -421,7 +421,9 @@ function claimRewards(address[] memory assets, uint256 amount, address to) exter
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -505,7 +507,7 @@ function claimRewardsOnBehalf(address[] memory assets, uint256 amount, address u
     #[derive(Clone)]
     pub struct claimRewardsOnBehalfCall {
         pub assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-        pub amount: alloy::sol_types::private::U256,
+        pub amount: alloy::sol_types::private::primitives::aliases::U256,
         pub user: alloy::sol_types::private::Address,
         pub to: alloy::sol_types::private::Address,
     }
@@ -513,7 +515,7 @@ function claimRewardsOnBehalf(address[] memory assets, uint256 amount, address u
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct claimRewardsOnBehalfReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -529,7 +531,7 @@ function claimRewardsOnBehalf(address[] memory assets, uint256 amount, address u
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
                 alloy::sol_types::private::Address,
                 alloy::sol_types::private::Address,
             );
@@ -570,7 +572,9 @@ function claimRewardsOnBehalf(address[] memory assets, uint256 amount, address u
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -661,7 +665,7 @@ function configureAssets(address[] memory assets, uint256[] memory emissionsPerS
     pub struct configureAssetsCall {
         pub assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
         pub emissionsPerSecond: alloy::sol_types::private::Vec<
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         >,
     }
     ///Container type for the return parameters of the [`configureAssets(address[],uint256[])`](configureAssetsCall) function.
@@ -680,7 +684,9 @@ function configureAssets(address[] memory assets, uint256[] memory emissionsPerS
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-                alloy::sol_types::private::Vec<alloy::sol_types::private::U256>,
+                alloy::sol_types::private::Vec<
+                    alloy::sol_types::private::primitives::aliases::U256,
+                >,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -922,7 +928,7 @@ function getRewardsBalance(address[] memory assets, address user) external view 
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct getRewardsBalanceReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -973,7 +979,9 @@ function getRewardsBalance(address[] memory assets, address user) external view 
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -1060,7 +1068,7 @@ function getUserUnclaimedRewards(address user) external view returns (uint256);
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct getUserUnclaimedRewardsReturn {
-        pub _0: alloy::sol_types::private::U256,
+        pub _0: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -1102,7 +1110,9 @@ function getUserUnclaimedRewards(address user) external view returns (uint256);
             #[doc(hidden)]
             type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -1178,8 +1188,8 @@ function handleAction(address asset, uint256 userBalance, uint256 totalSupply) e
     #[derive(Clone)]
     pub struct handleActionCall {
         pub asset: alloy::sol_types::private::Address,
-        pub userBalance: alloy::sol_types::private::U256,
-        pub totalSupply: alloy::sol_types::private::U256,
+        pub userBalance: alloy::sol_types::private::primitives::aliases::U256,
+        pub totalSupply: alloy::sol_types::private::primitives::aliases::U256,
     }
     ///Container type for the return parameters of the [`handleAction(address,uint256,uint256)`](handleActionCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
@@ -1198,8 +1208,8 @@ function handleAction(address asset, uint256 userBalance, uint256 totalSupply) e
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
                 alloy::sol_types::private::Address,
-                alloy::sol_types::private::U256,
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -1946,7 +1956,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn claimRewards(
             &self,
             assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-            amount: alloy::sol_types::private::U256,
+            amount: alloy::sol_types::private::primitives::aliases::U256,
             to: alloy::sol_types::private::Address,
         ) -> alloy_contract::SolCallBuilder<T, &P, claimRewardsCall, N> {
             self.call_builder(
@@ -1961,7 +1971,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn claimRewardsOnBehalf(
             &self,
             assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
-            amount: alloy::sol_types::private::U256,
+            amount: alloy::sol_types::private::primitives::aliases::U256,
             user: alloy::sol_types::private::Address,
             to: alloy::sol_types::private::Address,
         ) -> alloy_contract::SolCallBuilder<T, &P, claimRewardsOnBehalfCall, N> {
@@ -1979,7 +1989,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
             assets: alloy::sol_types::private::Vec<alloy::sol_types::private::Address>,
             emissionsPerSecond: alloy::sol_types::private::Vec<
-                alloy::sol_types::private::U256,
+                alloy::sol_types::private::primitives::aliases::U256,
             >,
         ) -> alloy_contract::SolCallBuilder<T, &P, configureAssetsCall, N> {
             self.call_builder(
@@ -2024,8 +2034,8 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         pub fn handleAction(
             &self,
             asset: alloy::sol_types::private::Address,
-            userBalance: alloy::sol_types::private::U256,
-            totalSupply: alloy::sol_types::private::U256,
+            userBalance: alloy::sol_types::private::primitives::aliases::U256,
+            totalSupply: alloy::sol_types::private::primitives::aliases::U256,
         ) -> alloy_contract::SolCallBuilder<T, &P, handleActionCall, N> {
             self.call_builder(
                 &handleActionCall {

@@ -135,8 +135,8 @@ error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 nee
     #[derive(Clone)]
     pub struct ERC20InsufficientAllowance {
         pub spender: alloy::sol_types::private::Address,
-        pub allowance: alloy::sol_types::private::U256,
-        pub needed: alloy::sol_types::private::U256,
+        pub allowance: alloy::sol_types::private::primitives::aliases::U256,
+        pub needed: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -150,8 +150,8 @@ error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 nee
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -222,8 +222,8 @@ error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
     #[derive(Clone)]
     pub struct ERC20InsufficientBalance {
         pub sender: alloy::sol_types::private::Address,
-        pub balance: alloy::sol_types::private::U256,
-        pub needed: alloy::sol_types::private::U256,
+        pub balance: alloy::sol_types::private::primitives::aliases::U256,
+        pub needed: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -237,8 +237,8 @@ error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]

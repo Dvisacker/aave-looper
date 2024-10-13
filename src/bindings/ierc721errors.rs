@@ -154,7 +154,7 @@ error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
     #[derive(Clone)]
     pub struct ERC721IncorrectOwner {
         pub sender: alloy::sol_types::private::Address,
-        pub tokenId: alloy::sol_types::private::U256,
+        pub tokenId: alloy::sol_types::private::primitives::aliases::U256,
         pub owner: alloy::sol_types::private::Address,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
@@ -169,7 +169,7 @@ error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
             alloy::sol_types::private::Address,
         );
         #[cfg(test)]
@@ -239,7 +239,7 @@ error ERC721InsufficientApproval(address operator, uint256 tokenId);
     #[derive(Clone)]
     pub struct ERC721InsufficientApproval {
         pub operator: alloy::sol_types::private::Address,
-        pub tokenId: alloy::sol_types::private::U256,
+        pub tokenId: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -252,7 +252,7 @@ error ERC721InsufficientApproval(address operator, uint256 tokenId);
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Address,
-            alloy::sol_types::private::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -643,7 +643,7 @@ error ERC721NonexistentToken(uint256 tokenId);
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct ERC721NonexistentToken {
-        pub tokenId: alloy::sol_types::private::U256,
+        pub tokenId: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -651,7 +651,9 @@ error ERC721NonexistentToken(uint256 tokenId);
         #[doc(hidden)]
         type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
         #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (alloy::sol_types::private::U256,);
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::primitives::aliases::U256,
+        );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
         fn _type_assertion(
