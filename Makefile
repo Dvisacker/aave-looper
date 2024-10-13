@@ -133,6 +133,10 @@ get-position-mainnet:
 	@echo "Getting position on Mainnet..."
 	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url $(MAINNET_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vv
 
+run-bot:
+	@echo "Running bot..."
+	@cd $(BINDINGS_DIR) && $(CARGO) run run-bot --amount 1 --leverage 2 --threshold 100
+
 
 
 # Combined commands
