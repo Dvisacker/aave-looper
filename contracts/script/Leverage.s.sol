@@ -28,7 +28,7 @@ contract Leverage is Script {
 
         vm.startBroadcast();
         ERC20(supplyAsset).approve(aaveLooper, initialAmount);
-        uint256 liquidity = looper.enterPosition(supplyAsset, borrowAsset, initialAmount, iterations, 500);
+        uint256 liquidity = looper.leverage(supplyAsset, borrowAsset, initialAmount, iterations, 500);
         vm.stopBroadcast();
 
         console2.log("Entered position. Final liquidity:", liquidity);

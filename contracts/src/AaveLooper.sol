@@ -177,12 +177,12 @@ contract AaveLooper is ImmutableOwnable {
      * @param iterations - Loop count
      * @return Liquidity at end of the loop
      */
-    function enterPositionFully(address supplyAsset, address borrowAsset, uint256 iterations, uint24 feeTier)
+    function leverageFully(address supplyAsset, address borrowAsset, uint256 iterations, uint24 feeTier)
         external
         onlyOwner
         returns (uint256)
     {
-        return enterPosition(supplyAsset, borrowAsset, ERC20(supplyAsset).balanceOf(msg.sender), iterations, feeTier);
+        return leverage(supplyAsset, borrowAsset, ERC20(supplyAsset).balanceOf(msg.sender), iterations, feeTier);
     }
 
     function getBestFeeTier(address factory, address tokenIn, address tokenOut, uint256 amountIn)
@@ -211,13 +211,11 @@ contract AaveLooper is ImmutableOwnable {
      * @param feeTier - Fee tier for the swap
      * @return Liquidity at end of the loop
      */
-    function enterPosition(
-        address supplyAsset,
-        address borrowAsset,
-        uint256 principal,
-        uint256 iterations,
-        uint24 feeTier
-    ) public onlyOwner returns (uint256) {
+    function leverage(address supplyAsset, address borrowAsset, uint256 principal, uint256 iterations, uint24 feeTier)
+        public
+        onlyOwner
+        returns (uint256)
+    {
         if (principal > 0) {
             ERC20(supplyAsset).transferFrom(msg.sender, address(this), principal);
         }

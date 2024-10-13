@@ -48,7 +48,7 @@ forge-clean:
 # This command will generate an error (no cargo.toml) that can be ignored because we are generating the bindings in a subcrate of the src folder
 forge-bind:
 	@echo "Generating Rust bindings for Solidity contracts..."
-	@cd $(CONTRACTS_DIR) && forge bind --alloy --bindings-path ../src/bindings --crate-name bindings --alloy-version 0.3.3 --module
+	@cd $(CONTRACTS_DIR) && forge bind --alloy --bindings-path ../src/bindings --alloy-version 0.3.3 --module
 
 deploy:
 	@echo "Deploying AaveLooper..."
