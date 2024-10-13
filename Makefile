@@ -135,7 +135,11 @@ get-position-mainnet:
 
 run-bot:
 	@echo "Running bot..."
-	@cd $(BINDINGS_DIR) && $(CARGO) run run-bot --amount 1 --leverage 2 --threshold 100
+	$(CARGO) run run-bot --amount 1 --leverage 2 --threshold 100
+
+leverage-arbitrum:
+	@echo "Leveraging on Arbitrum..."
+	$(CARGO) run leverage --amount 1 --supply-asset USDC --borrow-asset WETH --leverage 2
 
 
 

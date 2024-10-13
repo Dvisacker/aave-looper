@@ -45,6 +45,7 @@ pub struct AaveBot {
     asset_address: Address,
     lending_pool: LendingPool,
     asset: Token,
+    looper_address: Address,
     looper: Looper,
     max_amount: U256,
     leverage: u8,
@@ -57,6 +58,7 @@ impl AaveBot {
     pub async fn new(
         provider: Arc<SignerProvider>,
         aave_address: Address,
+        looper_address: Address,
         asset_address: Address,
         max_amount: U256,
         leverage: u8,
@@ -69,8 +71,6 @@ impl AaveBot {
         let signer_address = provider.default_signer_address();
 
         // Initialize the AaveLooper contract
-        // Note: You'll need to deploy this contract and get its address
-        let looper_address = Address::from_str("YOUR_DEPLOYED_AAVELOOPER_ADDRESS_HERE")?;
         let looper = AaveLooper::new(looper_address, provider.clone());
 
         Ok(Arc::new(Self {
@@ -79,6 +79,7 @@ impl AaveBot {
             lending_pool,
             asset,
             looper,
+            looper_address,
             asset_address,
             max_amount,
             leverage,
@@ -179,10 +180,11 @@ impl AaveBot {
     pub async fn approve_tokens(
         &self,
         asset_address: Address,
+        spender_address: Address,
         amount: U256,
     ) -> Result<(), Box<dyn Error>> {
         let token = IERC20::new(asset_address, self.provider.clone());
-        let tx = token.approve(*self.lending_pool.address(), amount);
+        let tx = token.approve(spender_address, amount);
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Approved AAVE to spend tokens: {:?}", receipt);
         Ok(())
@@ -233,8 +235,12 @@ impl AaveBot {
 
     pub async fn enter_position(&self) -> Result<(), Box<dyn Error>> {
         // Approve AAVE to spend our tokens
-        self.approve_tokens(self.asset_address, self.max_amount)
-            .await?;
+        self.approve_tokens(
+            self.asset_address,
+            *self.lending_pool.address(),
+            self.max_amount,
+        )
+        .await?;
 
         // Supply assets to AAVE
         self.supply_tokens(self.asset_address, self.max_amount)
@@ -255,16 +261,18 @@ impl AaveBot {
 
     pub async fn leverage(
         &self,
-        asset_address: Address,
+        supply_asset: Address,
+        borrow_asset: Address,
         amount: U256,
     ) -> Result<(), Box<dyn Error>> {
         // First, approve the AaveLooper contract to spend tokens on our behalf
-        self.approve_tokens(asset_address, amount).await?;
+        self.approve_tokens(supply_asset, self.looper_address, amount)
+            .await?;
 
         // Call the leverage function on the AaveLooper contract
         let tx = self.looper.leverage(
-            asset_address,  // supplyAsset
-            asset_address,  // borrowAsset (same as supply in this case)
+            supply_asset,   // supplyAsset
+            borrow_asset,   // borrowAsset (same as supply in this case)
             amount,         // principal
             U256::from(1),  // iterations (you can adjust this as needed)
             U24::from(500), // feeTier (0.3% fee tier for Uniswap V3, adjust if needed)

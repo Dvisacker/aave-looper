@@ -55,7 +55,11 @@ enum Commands {
         #[arg(short, long)]
         amount: u64,
         #[arg(short, long)]
-        token: String,
+        supply_asset: String,
+        #[arg(short, long)]
+        borrow_asset: String,
+        #[arg(short, long, default_value_t = 2)]
+        leverage: u8,
     },
 }
 
@@ -63,6 +67,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
     let cli = Cli::parse();
     let id = provider.get_chain_id().await?;
     let chain = Chain::from_id(id);
+    let looper_address: Address = "0x5119C3d14c892D710311bE3f102619df669BD62C".parse()?;
 
     match &cli.command {
         Commands::EnterPosition {
@@ -76,12 +81,14 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             let asset_address = get_token_address(chain, &token).ok_or_else(|| {
                 Box::<dyn Error>::from(format!("{} address not found for this chain", token))
             })?;
+
             let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Convert to USDC wei
             let threshold = U256::from(0); // Set threshold to 0 for immediate execution
 
             let looper = AaveBot::new(
                 provider,
                 aave_address,
+                looper_address,
                 asset_address,
                 amount_wei,
                 *leverage,
@@ -118,6 +125,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             let bot = AaveBot::new(
                 provider,
                 aave_address,
+                looper_address,
                 asset_address,
                 amount_wei,
                 *leverage,
@@ -142,6 +150,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             let bot = AaveBot::new(
                 provider.clone(),
                 aave_address,
+                looper_address,
                 asset_address,
                 amount_wei,
                 1,             // Leverage not used for supply
@@ -167,6 +176,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             let bot = AaveBot::new(
                 provider.clone(),
                 aave_address,
+                looper_address,
                 asset_address,
                 amount_wei,
                 1,             // Leverage not used for borrow
@@ -192,6 +202,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             let bot = AaveBot::new(
                 provider.clone(),
                 aave_address,
+                looper_address,
                 asset_address,
                 amount_wei,
                 1,             // Leverage not used for repay
@@ -201,27 +212,45 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             )
             .await?;
 
-            bot.approve_tokens(asset_address, amount_wei).await?;
+            bot.approve_tokens(asset_address, aave_address, amount_wei)
+                .await?;
 
             println!("Repaying {} {} to Aave...", amount, token);
             bot.repay_tokens(asset_address, amount_wei).await?;
             println!("Repay successful!");
         }
-        Commands::Leverage { amount, token } => {
+        Commands::Leverage {
+            amount,
+            supply_asset,
+            borrow_asset,
+            leverage,
+        } => {
             let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
                 Box::<dyn Error>::from("Aave lending pool address not found for this chain")
             })?;
-            let asset_address = get_token_address(chain, token).ok_or_else(|| {
-                Box::<dyn Error>::from(format!("{} address not found for this chain", token))
-            })?;
+            let supply_asset_address =
+                get_token_address(chain, &supply_asset).ok_or_else(|| {
+                    Box::<dyn Error>::from(format!(
+                        "{} address not found for this chain",
+                        supply_asset
+                    ))
+                })?;
+            let borrow_asset_address =
+                get_token_address(chain, &borrow_asset).ok_or_else(|| {
+                    Box::<dyn Error>::from(format!(
+                        "{} address not found for this chain",
+                        borrow_asset
+                    ))
+                })?;
             let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Assuming 6 decimals, adjust if needed
 
             let bot = AaveBot::new(
                 provider.clone(),
                 aave_address,
-                asset_address,
+                looper_address,
+                supply_asset_address,
                 amount_wei,
-                1,             // Leverage not used for this operation
+                *leverage,
                 U256::from(0), // Threshold not used for this operation
                 String::new(),
                 0,
@@ -230,9 +259,10 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
 
             println!(
                 "Increasing leverage by borrowing {} {} and supplying it back...",
-                amount, token
+                amount, borrow_asset
             );
-            bot.leverage(asset_address, amount_wei).await?;
+            bot.leverage(supply_asset_address, borrow_asset_address, amount_wei)
+                .await?;
             println!("Leverage increased successfully!");
         }
     }
