@@ -17,14 +17,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    EnterPosition {
-        #[arg(short, long)]
-        amount: u64,
-        #[arg(short, long, default_value_t = 1)]
-        leverage: u8,
-        #[arg(short, long, default_value = "USDC")]
-        token: String,
-    },
     RunBot {
         #[arg(short, long)]
         amount: u64,
@@ -61,6 +53,16 @@ enum Commands {
         #[arg(short, long, default_value_t = 2)]
         leverage: u8,
     },
+    Deleverage {
+        #[arg(short, long)]
+        supply_asset: String,
+        #[arg(short, long)]
+        borrow_asset: String,
+    },
+    Withdraw {
+        #[arg(short, long)]
+        asset: String,
+    },
 }
 
 pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>> {
@@ -70,38 +72,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
     let looper_address: Address = "0x5119C3d14c892D710311bE3f102619df669BD62C".parse()?;
 
     match &cli.command {
-        Commands::EnterPosition {
-            amount,
-            leverage,
-            token,
-        } => {
-            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
-                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
-            })?;
-            let asset_address = get_token_address(chain, &token).ok_or_else(|| {
-                Box::<dyn Error>::from(format!("{} address not found for this chain", token))
-            })?;
-
-            let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Convert to USDC wei
-            let threshold = U256::from(0); // Set threshold to 0 for immediate execution
-
-            let looper = AaveBot::new(
-                provider,
-                aave_address,
-                looper_address,
-                asset_address,
-                amount_wei,
-                *leverage,
-                threshold,
-                String::new(), // Empty string for Telegram token (not used in this context)
-                0,             // 0 for chat_id (not used in this context)
-            )
-            .await?;
-
-            println!("Entering position on Aave...");
-            looper.enter_position().await?;
-            println!("Position entered successfully!");
-        }
         Commands::RunBot {
             amount,
             leverage,
@@ -242,7 +212,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                         borrow_asset
                     ))
                 })?;
-            let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(6)); // Assuming 6 decimals, adjust if needed
+            let amount_wei = U256::from(*amount) * U256::from(10).pow(U256::from(4)); // Assuming 6 decimals, adjust if needed
 
             let bot = AaveBot::new(
                 provider.clone(),
@@ -264,6 +234,62 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             bot.leverage(supply_asset_address, borrow_asset_address, amount_wei)
                 .await?;
             println!("Leverage increased successfully!");
+        }
+        Commands::Deleverage {
+            supply_asset,
+            borrow_asset,
+        } => {
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let supply_asset_address = get_token_address(chain, supply_asset).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", supply_asset))
+            })?;
+            let borrow_asset_address = get_token_address(chain, borrow_asset).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", borrow_asset))
+            })?;
+
+            let bot = AaveBot::new(
+                provider.clone(),
+                aave_address,
+                looper_address,
+                supply_asset_address,
+                U256::ZERO, // Not used for deleverage
+                1,          // Not used for deleverage
+                U256::ZERO, // Not used for deleverage
+                String::new(),
+                0,
+            )
+            .await?;
+
+            println!("Deleveraging position...");
+            bot.deleverage(supply_asset_address, borrow_asset_address)
+                .await?;
+        }
+        Commands::Withdraw { asset } => {
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let asset_address = get_token_address(chain, asset).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", asset))
+            })?;
+
+            let bot = AaveBot::new(
+                provider.clone(),
+                aave_address,
+                looper_address,
+                asset_address,
+                U256::ZERO, // Not used for withdraw
+                1,          // Not used for withdraw
+                U256::ZERO, // Not used for withdraw
+                String::new(),
+                0,
+            )
+            .await?;
+
+            println!("Withdrawing {} from AaveLooper...", asset);
+            bot.withdraw(asset_address).await?;
+            println!("Withdrawal successful!");
         }
     }
 

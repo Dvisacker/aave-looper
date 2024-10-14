@@ -120,7 +120,6 @@ repay-arbitrum:
 	@echo "Repaying on Arbitrum..."
 	@cd $(CONTRACTS_DIR) && forge script script/Repay.s.sol:Repay --rpc-url $(ARBITRUM_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast -vv
 
-
 get-position-local-fork:
 	@echo "Getting position on Local..."
 	@cd $(CONTRACTS_DIR) && forge script script/GetPosition.s.sol:GetPosition --rpc-url http://localhost:8545 --private-key $(PRIVATE_KEY) --broadcast -vv
@@ -141,6 +140,13 @@ leverage-arbitrum:
 	@echo "Leveraging on Arbitrum..."
 	$(CARGO) run leverage --amount 1 --supply-asset USDC --borrow-asset WETH --leverage 2
 
+deleverage-arbitrum:
+	@echo "Deleveraging on Arbitrum..."
+	$(CARGO) run deleverage --supply-asset USDC --borrow-asset WETH
+
+withdraw-assets-arbitrum:
+	@echo "Withdrawing assets from Arbitrum..."
+	$(CARGO) run withdraw --asset WETH
 
 
 # Combined commands

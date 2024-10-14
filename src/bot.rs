@@ -233,25 +233,6 @@ impl AaveBot {
         Ok(())
     }
 
-    pub async fn enter_position(&self) -> Result<(), Box<dyn Error>> {
-        // Approve AAVE to spend our tokens
-        self.approve_tokens(
-            self.asset_address,
-            *self.lending_pool.address(),
-            self.max_amount,
-        )
-        .await?;
-
-        // Supply assets to AAVE
-        self.supply_tokens(self.asset_address, self.max_amount)
-            .await?;
-
-        self.borrow_tokens(self.asset_address, self.max_amount / U256::from(2))
-            .await?;
-
-        Ok(())
-    }
-
     async fn send_telegram_message(&self, message: String) -> Result<(), Box<dyn Error>> {
         // self.telegram_bot
         //     .send_message(ChatId(self.chat_id), message)
@@ -281,6 +262,27 @@ impl AaveBot {
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Increased leverage: {:?}", receipt);
 
+        Ok(())
+    }
+
+    pub async fn deleverage(
+        &self,
+        supply_asset: Address,
+        borrow_asset: Address,
+    ) -> Result<(), Box<dyn Error>> {
+        let tx =
+            self.looper
+                .exitPosition(supply_asset, borrow_asset, U256::from(10), U24::from(500));
+
+        let receipt = tx.send().await?.get_receipt().await?;
+        println!("Exit position: {:?}", receipt);
+        Ok(())
+    }
+
+    pub async fn withdraw(&self, asset_address: Address) -> Result<(), Box<dyn Error>> {
+        let tx = self.looper._withdrawToOwner(asset_address);
+        let receipt = tx.send().await?.get_receipt().await?;
+        println!("Withdrawn from AaveLooper: {:?}", receipt);
         Ok(())
     }
 }
