@@ -8,6 +8,7 @@ pub mod bot;
 pub mod cli;
 pub mod config;
 pub mod provider;
+pub mod token_manager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
