@@ -98,8 +98,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 looper_address,
                 asset_address,
                 amount_wei,
-                *leverage,
-                threshold_wei,
                 telegram_token,
                 chat_id,
             )
@@ -123,8 +121,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 looper_address,
                 asset_address,
                 amount_wei,
-                1,             // Leverage not used for supply
-                U256::from(0), // Threshold not used for supply
                 String::new(),
                 0,
             )
@@ -148,8 +144,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 aave_address,
                 looper_address,
                 asset_address,
-                amount_wei,
-                1,             // Leverage not used for borrow
                 U256::from(0), // Threshold not used for borrow
                 String::new(),
                 0,
@@ -174,8 +168,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 aave_address,
                 looper_address,
                 asset_address,
-                amount_wei,
-                1,             // Leverage not used for repay
                 U256::from(0), // Threshold not used for repay
                 String::new(),
                 0,
@@ -219,8 +211,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 aave_address,
                 looper_address,
                 supply_asset_address,
-                amount_wei,
-                *leverage,
                 U256::from(0), // Threshold not used for this operation
                 String::new(),
                 0,
@@ -231,8 +221,13 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 "Increasing leverage by borrowing {} {} and supplying it back...",
                 amount, borrow_asset
             );
-            bot.leverage(supply_asset_address, borrow_asset_address, amount_wei)
-                .await?;
+            bot.leverage(
+                supply_asset_address,
+                borrow_asset_address,
+                amount_wei,
+                *leverage,
+            )
+            .await?;
             println!("Leverage increased successfully!");
         }
         Commands::Deleverage {
@@ -254,8 +249,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 aave_address,
                 looper_address,
                 supply_asset_address,
-                U256::ZERO, // Not used for deleverage
-                1,          // Not used for deleverage
                 U256::ZERO, // Not used for deleverage
                 String::new(),
                 0,
@@ -279,8 +272,6 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 aave_address,
                 looper_address,
                 asset_address,
-                U256::ZERO, // Not used for withdraw
-                1,          // Not used for withdraw
                 U256::ZERO, // Not used for withdraw
                 String::new(),
                 0,

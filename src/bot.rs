@@ -35,7 +35,7 @@ sol!(
     "./contracts/out/AaveLooper.sol/AaveLooper.json"
 );
 
-type Token = IERC20Instance<BoxTransport, Arc<SignerProvider>>;
+// type Token = IERC20Instance<BoxTransport, Arc<SignerProvider>>;
 type LendingPool = ILendingPoolInstance<BoxTransport, Arc<SignerProvider>>;
 type Looper = AaveLooperInstance<BoxTransport, Arc<SignerProvider>>;
 
@@ -44,12 +44,9 @@ pub struct AaveBot {
     signer_address: Address,
     asset_address: Address,
     lending_pool: LendingPool,
-    asset: Token,
     looper_address: Address,
     looper: Looper,
     max_amount: U256,
-    leverage: u8,
-    threshold: U256,
     // telegram_bot: Bot,
     // chat_id: i64,
 }
@@ -61,13 +58,10 @@ impl AaveBot {
         looper_address: Address,
         asset_address: Address,
         max_amount: U256,
-        leverage: u8,
-        threshold: U256,
         telegram_token: String,
         chat_id: i64,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let lending_pool = ILendingPool::new(aave_address, provider.clone());
-        let asset = IERC20::new(asset_address, provider.clone());
         let signer_address = provider.default_signer_address();
 
         // Initialize the AaveLooper contract
@@ -77,13 +71,10 @@ impl AaveBot {
             provider,
             signer_address,
             lending_pool,
-            asset,
             looper,
             looper_address,
             asset_address,
             max_amount,
-            leverage,
-            threshold,
             // telegram_bot,
             // chat_id,
         }))
@@ -233,7 +224,7 @@ impl AaveBot {
         Ok(())
     }
 
-    async fn send_telegram_message(&self, message: String) -> Result<(), Box<dyn Error>> {
+    async fn send_telegram_message(&self, _message: String) -> Result<(), Box<dyn Error>> {
         // self.telegram_bot
         //     .send_message(ChatId(self.chat_id), message)
         //     .await?;
@@ -245,18 +236,17 @@ impl AaveBot {
         supply_asset: Address,
         borrow_asset: Address,
         amount: U256,
+        iterations: u8,
     ) -> Result<(), Box<dyn Error>> {
-        // First, approve the AaveLooper contract to spend tokens on our behalf
         self.approve_tokens(supply_asset, self.looper_address, amount)
             .await?;
 
-        // Call the leverage function on the AaveLooper contract
         let tx = self.looper.leverage(
-            supply_asset,   // supplyAsset
-            borrow_asset,   // borrowAsset (same as supply in this case)
-            amount,         // principal
-            U256::from(1),  // iterations (you can adjust this as needed)
-            U24::from(500), // feeTier (0.3% fee tier for Uniswap V3, adjust if needed)
+            supply_asset,
+            borrow_asset,
+            amount,
+            U256::from(iterations),
+            U24::from(500), // (0.3% fee tier for Uniswap V3, adjust if needed)
         );
 
         let receipt = tx.send().await?.get_receipt().await?;
