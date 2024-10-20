@@ -11,7 +11,6 @@ use teloxide::prelude::*;
 use tokio::time;
 use AaveLooper::AaveLooperInstance;
 use ILendingPool::ILendingPoolInstance;
-use IERC20::IERC20Instance;
 
 sol!(
     #[sol(rpc)]
@@ -113,25 +112,17 @@ impl AaveBot {
         &self,
         supply_asset: Address,
         borrow_asset: Address,
-        supply_threshold: U256,
-        borrow_threshold: U256,
         amount: U256,
         iterations: u8,
     ) -> Result<(), Box<dyn Error>> {
         loop {
-            let (supply_cap, supply_total) = self.get_caps(supply_asset).await?;
-            let (borrow_cap, borrow_total) = self.get_caps(borrow_asset).await?;
+            let result = self
+                .leverage(supply_asset, borrow_asset, amount, iterations)
+                .await;
 
-            let supply_space = supply_cap - supply_total;
-            let borrow_space = borrow_cap - borrow_total;
-
-            println!("Supply space: {}", supply_space);
-            println!("Borrow space: {}", borrow_space);
-
-            if supply_space > supply_threshold && borrow_space > borrow_threshold {
-                self.leverage(supply_asset, borrow_asset, amount, iterations)
-                    .await?;
-
+            if result.is_err() {
+                println!("Simulation failed: {:?}", result);
+            } else {
                 let message = format!(
                     "Sniping successful!\n\
                     Leveraged position entered:\n\
@@ -144,7 +135,6 @@ impl AaveBot {
                     amount / U256::from(10).pow(U256::from(6)),
                     iterations
                 );
-
                 self.send_telegram_message(&message).await?;
                 println!("Sniping complete. Bot stopping.");
                 break;
@@ -178,63 +168,9 @@ impl AaveBot {
                 caps.0, caps.1
             );
 
-            // Send the message to Telegram
             self.send_telegram_message(&message).await?;
             time::sleep(self.monitor_interval).await;
         }
-
-        // let a_token = IERC20::IERC20Instance::new(a_token_address, self.provider.clone());
-        // let IERC20::balanceOfReturn {
-        //     _0: total_liquidity,
-        // } = a_token.balanceOf(a_token_address).call().await?;
-        // let IERC20::balanceOfReturn { _0: asset_balance } =
-        //     self.asset.balanceOf(a_token_address).call().await?;
-
-        // let available_liquidity_wei = total_liquidity - asset_balance;
-        // let available_liquidity = available_liquidity_wei / U256::from(10).pow(U256::from(18));
-
-        // println!("Available liquidity in pool: {}", available_liquidity);
-
-        // if available_liquidity > self.threshold {
-        //     self.enter_position().await?;
-        //     self.send_telegram_message(format!(
-        //         "Entered position. Available liquidity: {}",
-        //         available_liquidity
-        //     ))
-        //     .await?;
-        // } else {
-        //     self.send_telegram_message(format!(
-        //         "Available liquidity ({}) below threshold. No action taken.",
-        //         available_liquidity
-        //     ))
-        //     .await?;
-        // }
-        // let result = self
-        //     .aave
-        //     .getUserAccountData(self.signer_address)
-        //     .call()
-        //     .await?;
-
-        // let available_borrows = result.availableBorrowsBase;
-
-        // println!("Available borrows: {}", available_borrows);
-
-        // if available_borrows > self.threshold {
-        //     self.enter_position().await?;
-        //     self.send_telegram_message(format!(
-        //         "Entered position. Available borrows: {}",
-        //         available_borrows
-        //     ))
-        //     .await?;
-        // } else {
-        //     self.send_telegram_message(format!(
-        //         "Available borrows ({}) below threshold. No action taken.",
-        //         available_borrows
-        //     ))
-        //     .await?;
-        // }
-
-        Ok(())
     }
 
     pub async fn approve_tokens(
@@ -318,6 +254,10 @@ impl AaveBot {
             U24::from(500), // (0.3% fee tier for Uniswap V3, adjust if needed)
         );
 
+        let result = tx.call().await?;
+        println!("Simulation result: {:?}", result);
+
+        // TODO: Kill bot if simulation is successful but the tx fails
         let receipt = tx.send().await?.get_receipt().await?;
         println!("Increased leverage: {:?}", receipt);
 

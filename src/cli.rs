@@ -379,8 +379,6 @@ pub async fn run_cli(
             bot.snipe(
                 supply_asset_address,
                 borrow_asset_address,
-                U256::from(*supply_threshold),
-                U256::from(*borrow_threshold),
                 U256::from(*amount),
                 *iterations,
             )
