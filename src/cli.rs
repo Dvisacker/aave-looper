@@ -7,6 +7,7 @@ use alloy_primitives::{Address, U256};
 use clap::{Parser, Subcommand};
 use std::error::Error;
 use std::sync::Arc;
+use std::time::Duration;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -66,7 +67,10 @@ enum Commands {
     Monitor,
 }
 
-pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>> {
+pub async fn run_cli(
+    provider: Arc<SignerProvider>,
+    monitor_interval: Duration,
+) -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
     let id = provider.get_chain_id().await?;
     let chain = Chain::from_id(id);
@@ -101,6 +105,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 amount_wei,
                 telegram_token,
                 chat_id,
+                monitor_interval,
             )
             .await?;
 
@@ -124,6 +129,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 amount_wei,
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -148,6 +154,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::from(0), // Threshold not used for borrow
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -172,6 +179,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::from(0), // Threshold not used for repay
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -215,6 +223,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::from(0), // Threshold not used for this operation
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -253,6 +262,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::ZERO, // Not used for deleverage
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -276,6 +286,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::ZERO, // Not used for withdraw
                 String::new(),
                 0,
+                monitor_interval,
             )
             .await?;
 
@@ -305,6 +316,7 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
                 U256::ZERO, // Not used for monitoring
                 telegram_token,
                 chat_id,
+                monitor_interval,
             )
             .await?;
 

@@ -51,6 +51,7 @@ pub struct AaveBot {
     max_amount: U256,
     telegram_bot: Option<Bot>,
     chat_id: i64,
+    monitor_interval: Duration,
 }
 
 impl AaveBot {
@@ -62,6 +63,7 @@ impl AaveBot {
         max_amount: U256,
         telegram_token: String,
         chat_id: i64,
+        monitor_interval: Duration,
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let lending_pool = ILendingPool::new(aave_address, provider.clone());
         let signer_address = provider.default_signer_address();
@@ -83,6 +85,7 @@ impl AaveBot {
             max_amount,
             telegram_bot,
             chat_id,
+            monitor_interval,
         }))
     }
 
@@ -130,7 +133,7 @@ impl AaveBot {
 
             // Send the message to Telegram
             self.send_telegram_message(&message).await?;
-            time::sleep(Duration::from_secs(10)).await; // Wait for 10 minutes before the next iteration
+            time::sleep(self.monitor_interval).await;
         }
 
         // let a_token = IERC20::IERC20Instance::new(a_token_address, self.provider.clone());
