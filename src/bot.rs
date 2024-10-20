@@ -109,6 +109,53 @@ impl AaveBot {
         Ok((supply_cap, borrow_cap))
     }
 
+    pub async fn snipe(
+        &self,
+        supply_asset: Address,
+        borrow_asset: Address,
+        supply_threshold: U256,
+        borrow_threshold: U256,
+        amount: U256,
+        iterations: u8,
+    ) -> Result<(), Box<dyn Error>> {
+        loop {
+            let (supply_cap, supply_total) = self.get_caps(supply_asset).await?;
+            let (borrow_cap, borrow_total) = self.get_caps(borrow_asset).await?;
+
+            let supply_space = supply_cap - supply_total;
+            let borrow_space = borrow_cap - borrow_total;
+
+            println!("Supply space: {}", supply_space);
+            println!("Borrow space: {}", borrow_space);
+
+            if supply_space > supply_threshold && borrow_space > borrow_threshold {
+                self.leverage(supply_asset, borrow_asset, amount, iterations)
+                    .await?;
+
+                let message = format!(
+                    "Sniping successful!\n\
+                    Leveraged position entered:\n\
+                    Supply Asset: {}\n\
+                    Borrow Asset: {}\n\
+                    Amount: {} USDC\n\
+                    Iterations: {}",
+                    supply_asset,
+                    borrow_asset,
+                    amount / U256::from(10).pow(U256::from(6)),
+                    iterations
+                );
+
+                self.send_telegram_message(&message).await?;
+                println!("Sniping complete. Bot stopping.");
+                break;
+            }
+
+            time::sleep(Duration::from_secs(30)).await; // Wait for 30 seconds before checking again
+        }
+
+        Ok(())
+    }
+
     pub async fn monitor(&self) -> Result<(), Box<dyn Error>> {
         loop {
             let reserve_data = self
@@ -126,8 +173,8 @@ impl AaveBot {
 
             let message = format!(
                 "Current status:\n\
-            Supply Cap: {} ETH\n\
-            Borrow Cap: {} ETH",
+                Supply Cap: {} ETH\n\
+                Borrow Cap: {} ETH",
                 caps.0, caps.1
             );
 

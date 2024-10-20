@@ -65,6 +65,20 @@ enum Commands {
         asset: String,
     },
     Monitor,
+    Snipe {
+        #[arg(long)]
+        supply_asset: String,
+        #[arg(long)]
+        borrow_asset: String,
+        #[arg(long)]
+        supply_threshold: u64,
+        #[arg(long)]
+        borrow_threshold: u64,
+        #[arg(long)]
+        amount: u64,
+        #[arg(long)]
+        iterations: u8,
+    },
 }
 
 pub async fn run_cli(
@@ -323,6 +337,55 @@ pub async fn run_cli(
             println!("Starting monitoring...");
             bot.monitor().await?;
             println!("Monitoring complete.");
+        }
+        Commands::Snipe {
+            supply_asset,
+            borrow_asset,
+            supply_threshold,
+            borrow_threshold,
+            amount,
+            iterations,
+        } => {
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let supply_asset_address = get_token_address(chain, supply_asset).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", supply_asset))
+            })?;
+            let borrow_asset_address = get_token_address(chain, borrow_asset).ok_or_else(|| {
+                Box::<dyn Error>::from(format!("{} address not found for this chain", borrow_asset))
+            })?;
+
+            let telegram_token =
+                std::env::var("TELEGRAM_BOT_TOKEN").expect("TELEGRAM_BOT_TOKEN must be set");
+            let chat_id = std::env::var("CHAT_ID")
+                .expect("CHAT_ID must be set")
+                .parse()
+                .expect("CHAT_ID should be a valid integer");
+
+            let bot = AaveBot::new(
+                provider,
+                aave_address,
+                looper_address,
+                supply_asset_address,
+                U256::ZERO, // Not used for sniping
+                telegram_token,
+                chat_id,
+                monitor_interval,
+            )
+            .await?;
+
+            println!("Starting sniping...");
+            bot.snipe(
+                supply_asset_address,
+                borrow_asset_address,
+                U256::from(*supply_threshold),
+                U256::from(*borrow_threshold),
+                U256::from(*amount),
+                *iterations,
+            )
+            .await?;
+            println!("Sniping complete.");
         }
     }
 
