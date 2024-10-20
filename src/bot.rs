@@ -1,4 +1,5 @@
 use crate::provider::SignerProvider;
+use crate::telegram::{create_telegram_bot, send_telegram_message};
 use alloy::sol;
 use alloy::{providers::WalletProvider, transports::BoxTransport};
 use alloy_primitives::aliases::U24;
@@ -6,6 +7,7 @@ use alloy_primitives::{Address, U256};
 use std::error::Error;
 use std::sync::Arc;
 use std::time::Duration;
+use teloxide::prelude::*;
 use tokio::time;
 use AaveLooper::AaveLooperInstance;
 use ILendingPool::ILendingPoolInstance;
@@ -47,8 +49,8 @@ pub struct AaveBot {
     looper_address: Address,
     looper: Looper,
     max_amount: U256,
-    // telegram_bot: Bot,
-    // chat_id: i64,
+    telegram_bot: Option<Bot>,
+    chat_id: i64,
 }
 
 impl AaveBot {
@@ -63,9 +65,13 @@ impl AaveBot {
     ) -> Result<Arc<Self>, Box<dyn Error>> {
         let lending_pool = ILendingPool::new(aave_address, provider.clone());
         let signer_address = provider.default_signer_address();
-
-        // Initialize the AaveLooper contract
         let looper = AaveLooper::new(looper_address, provider.clone());
+
+        let telegram_bot = if !telegram_token.is_empty() {
+            Some(create_telegram_bot(&telegram_token).await?)
+        } else {
+            None
+        };
 
         Ok(Arc::new(Self {
             provider,
@@ -75,14 +81,14 @@ impl AaveBot {
             looper_address,
             asset_address,
             max_amount,
-            // telegram_bot,
-            // chat_id,
+            telegram_bot,
+            chat_id,
         }))
     }
 
     pub async fn run(self: Arc<Self>) -> Result<(), Box<dyn Error>> {
         loop {
-            self.monitor_and_act().await?;
+            self.monitor().await?;
             time::sleep(Duration::from_secs(600)).await; // Wait for 10 minutes before the next iteration
         }
     }
@@ -100,19 +106,32 @@ impl AaveBot {
         Ok((supply_cap, borrow_cap))
     }
 
-    pub async fn monitor_and_act(&self) -> Result<(), Box<dyn Error>> {
-        let reserve_data = self
-            .lending_pool
-            .getReserveData(self.asset_address)
-            .call()
-            .await?;
-        let a_token_address = reserve_data._0.aTokenAddress;
+    pub async fn monitor(&self) -> Result<(), Box<dyn Error>> {
+        loop {
+            let reserve_data = self
+                .lending_pool
+                .getReserveData(self.asset_address)
+                .call()
+                .await?;
+            let a_token_address = reserve_data._0.aTokenAddress;
 
-        let caps = self.get_caps(self.asset_address).await?;
+            let caps = self.get_caps(self.asset_address).await?;
 
-        println!("Supply cap: {}", caps.0);
-        println!("Borrow cap: {}", caps.1);
-        println!("A token address: {}", a_token_address);
+            println!("Supply cap: {}", caps.0);
+            println!("Borrow cap: {}", caps.1);
+            println!("A token address: {}", a_token_address);
+
+            let message = format!(
+                "Current status:\n\
+            Supply Cap: {} ETH\n\
+            Borrow Cap: {} ETH",
+                caps.0, caps.1
+            );
+
+            // Send the message to Telegram
+            self.send_telegram_message(&message).await?;
+            time::sleep(Duration::from_secs(10)).await; // Wait for 10 minutes before the next iteration
+        }
 
         // let a_token = IERC20::IERC20Instance::new(a_token_address, self.provider.clone());
         // let IERC20::balanceOfReturn {
@@ -224,10 +243,10 @@ impl AaveBot {
         Ok(())
     }
 
-    async fn send_telegram_message(&self, _message: String) -> Result<(), Box<dyn Error>> {
-        // self.telegram_bot
-        //     .send_message(ChatId(self.chat_id), message)
-        //     .await?;
+    async fn send_telegram_message(&self, message: &str) -> Result<(), Box<dyn Error>> {
+        if let Some(bot) = &self.telegram_bot {
+            send_telegram_message(bot, self.chat_id, message).await?;
+        }
         Ok(())
     }
 

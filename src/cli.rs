@@ -63,6 +63,7 @@ enum Commands {
         #[arg(short, long)]
         asset: String,
     },
+    Monitor,
 }
 
 pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>> {
@@ -281,6 +282,35 @@ pub async fn run_cli(provider: Arc<SignerProvider>) -> Result<(), Box<dyn Error>
             println!("Withdrawing {} from AaveLooper...", asset);
             bot.withdraw(asset_address).await?;
             println!("Withdrawal successful!");
+        }
+        Commands::Monitor => {
+            let aave_address = get_aave_lending_pool_address(chain).ok_or_else(|| {
+                Box::<dyn Error>::from("Aave lending pool address not found for this chain")
+            })?;
+            let asset_address = get_token_address(chain, "usdc")
+                .ok_or_else(|| Box::<dyn Error>::from("USDC address not found for this chain"))?;
+
+            let telegram_token =
+                std::env::var("TELEGRAM_BOT_TOKEN").expect("TELEGRAM_BOT_TOKEN must be set");
+            let chat_id = std::env::var("CHAT_ID")
+                .expect("CHAT_ID must be set")
+                .parse()
+                .expect("CHAT_ID should be a valid integer");
+
+            let bot = AaveBot::new(
+                provider,
+                aave_address,
+                looper_address,
+                asset_address,
+                U256::ZERO, // Not used for monitoring
+                telegram_token,
+                chat_id,
+            )
+            .await?;
+
+            println!("Starting monitoring...");
+            bot.monitor().await?;
+            println!("Monitoring complete.");
         }
     }
 
